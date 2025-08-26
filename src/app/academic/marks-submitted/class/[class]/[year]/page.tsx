@@ -187,6 +187,7 @@ const tabs = ["Summary", "Overall Marks", "Repeaters Summary", "Repeaters & Reta
 
 export default function ClassMarksPage() {
   const params = useParams();
+  const router = require('next/navigation').useRouter();
   const className = params.class
     ? decodeURIComponent(
         Array.isArray(params.class) ? params.class[0] : params.class
@@ -197,6 +198,9 @@ export default function ClassMarksPage() {
         Array.isArray(params.year) ? params.year[0] : params.year
       )
     : "Year";
+  function handleBackToMarks() {
+    router.back();
+  }
   const [activeTab, setActiveTab] = useState(0);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -342,6 +346,16 @@ export default function ClassMarksPage() {
 
   return (
     <div className="p-2">
+      <Button
+        variant="outline"
+        className="mb-4 flex items-center gap-2 hover:bg-blue-100 hover:text-gray-800"
+        onClick={handleBackToMarks}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="mr-2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Marks
+      </Button>
       <h1 className="text-2xl font-bold mb-2">
         {className} - {year} Marks
       </h1>
