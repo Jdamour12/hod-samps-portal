@@ -23,11 +23,16 @@ const students = [
 
 export default function StudentMarksPage() {
   const params = useParams();
+  const router = require("next/navigation").useRouter();
   let moduleParam = params.module;
   if (Array.isArray(moduleParam)) {
     moduleParam = moduleParam[0];
   }
   moduleParam = decodeURIComponent(moduleParam || "");
+
+  function handleBackToMarks() {
+    router.back();
+  }
   const [search, setSearch] = useState("");
   const [published, setPublished] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -159,6 +164,29 @@ export default function StudentMarksPage() {
   );
   return (
     <div className="p-2">
+      <Button
+        variant="outline"
+        className="mb-4 flex items-center gap-2 hover:bg-blue-100 hover:text-gray-900"
+        onClick={handleBackToMarks}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="mr-2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Back to Marks
+      </Button>
       <h1 className="text-2xl font-bold mb-2">{moduleTitle} Marks</h1>
       <p className="text-gray-600 mb-1">
         Lecturer: <span className="font-semibold">{lecturerName}</span>
@@ -174,7 +202,7 @@ export default function StudentMarksPage() {
           onClick={() => setSubmitted(true)}
           disabled={submitted}
         >
-          Submit to Dean
+          Approve & Submit to Dean
         </Button>
         <Button
           variant="outline"
