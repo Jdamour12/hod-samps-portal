@@ -388,7 +388,7 @@ export default function ClassMarksPage() {
                       </th>
                     </tr>
                     <tr className="bg-[#f5f5f5]">
-                      <th className="border p-2 text-left w-80"></th>
+                      <th className="border p-2 text-left w-80 text-gray-700 font-semibold"></th>
                       <th className="border p-2 text-center w-12 font-semibold">F</th>
                       <th className="border p-2 text-center w-12 font-semibold">M</th>
                       <th className="border p-2 text-center w-16 font-semibold">TOT</th>
@@ -400,13 +400,13 @@ export default function ClassMarksPage() {
                   <tbody>
                     {studentSummaryData.map((row, idx) => (
                       <tr key={idx} className="even:bg-muted/30">
-                        <td className="border p-2 text-left">{row.category}</td>
-                        <td className="border p-2 text-center">{row.f}</td>
-                        <td className="border p-2 text-center">{row.m}</td>
-                        <td className="border p-2 text-center font-semibold">{row.tot}</td>
-                        <td className="border p-2 text-center">{row.fPct.toFixed(2)}%</td>
-                        <td className="border p-2 text-center">{row.mPct.toFixed(2)}%</td>
-                        <td className="border p-2 text-center font-semibold">{row.totPct.toFixed(2)}%</td>
+                        <td className="border p-2 text-left text-gray-700 text-sm">{row.category}</td>
+                        <td className="border p-2 text-center text-gray-700 text-sm">{row.f}</td>
+                        <td className="border p-2 text-center text-gray-700 text-sm">{row.m}</td>
+                        <td className="border p-2 text-center font-semibold text-gray-700 text-sm">{row.tot}</td>
+                        <td className="border p-2 text-center text-gray-700 text-sm">{row.fPct.toFixed(2)}%</td>
+                        <td className="border p-2 text-center text-gray-700 text-sm">{row.mPct.toFixed(2)}%</td>
+                        <td className="border p-2 text-center font-semibold text-gray-700 text-sm">{row.totPct.toFixed(2)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -714,7 +714,6 @@ export default function ClassMarksPage() {
         <Card>
           <CardContent className="p-0">
             <div className="p-4">
-              <h2 className="text-xl font-bold mb-2">Repeaters Summary</h2>
               <p className="text-muted-foreground mb-4 text-sm">
                 Summary statistics for students who are repeating courses or the academic year.
               </p>
@@ -733,14 +732,14 @@ export default function ClassMarksPage() {
                   {repeatersSummaryData.map((row, idx) => (
                     <tr
                       key={idx}
-                      className={`${idx === 0 ? "bg-[#f0f0f0] font-semibold" : "even:bg-muted/30"}`}
+                      className={`${idx === 0 ? "bg-[#f0f0f0] font-semibold text-gray-700 text-sm" : "even:bg-muted/30"}`}
                     >
-                      <td className={`border p-3 text-left ${idx === 0 ? "font-bold" : ""}`}>
+                      <td className={`border p-3 text-left text-gray-700 text-sm ${idx === 0 ? "font-bold" : ""}`}>
                         {row.category}
                       </td>
-                      <td className="border p-3 text-center">{row.f}</td>
-                      <td className="border p-3 text-center">{row.m}</td>
-                      <td className="border p-3 text-center font-semibold">{row.tot}</td>
+                      <td className="border border-gray-200 p-3 text-center text-gray-700 text-sm">{row.f}</td>
+                      <td className="border p-3 text-center text-gray-700 text-sm">{row.m}</td>
+                      <td className="border p-3 text-center font-semibold text-gray-700 text-sm">{row.tot}</td>
                     </tr>
                   ))}
                 </tbody>

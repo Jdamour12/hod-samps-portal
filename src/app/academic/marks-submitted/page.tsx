@@ -308,15 +308,15 @@ export default function MarksSubmittedPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="text-black">Lecturer</TableHead>
-                      <TableHead className="text-black">Module</TableHead>
-                      <TableHead className="text-black">Students</TableHead>
-                      <TableHead className="text-black">
+                      <TableHead className="text-gray-700 font-semibold">Lecturer</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Module</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Students</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
                         Submission Date
                       </TableHead>
-                      <TableHead className="text-black">Deadline</TableHead>
-                      <TableHead className="text-black">Status</TableHead>
-                      <TableHead className="text-right text-black">
+                      <TableHead className="text-gray-700 font-semibold">Deadline</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Status</TableHead>
+                      <TableHead className="text-right text-gray-700 font-semibold">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -324,19 +324,19 @@ export default function MarksSubmittedPage() {
                   <TableBody>
                     {modulePaginatedData.map((row, idx) => (
                       <TableRow key={idx}>
-                        <TableCell className="font-medium text-gray-800">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.lecturer}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.module}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.students}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.submissionDate}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.deadline}
                         </TableCell>
                         <TableCell>
@@ -535,15 +535,15 @@ export default function MarksSubmittedPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="text-black">Class</TableHead>
-                      <TableHead className="text-black">Lecturer</TableHead>
-                      <TableHead className="text-black">Students</TableHead>
-                      <TableHead className="text-black">
+                      <TableHead className="text-gray-700 font-semibold">Class</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Lecturer</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Students</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
                         Submission Date
                       </TableHead>
-                      <TableHead className="text-black">Deadline</TableHead>
-                      <TableHead className="text-black">Status</TableHead>
-                      <TableHead className="text-right text-black">
+                      <TableHead className="text-gray-700 font-semibold">Deadline</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Status</TableHead>
+                      <TableHead className="text-right text-gray-700 font-semibold">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -551,19 +551,19 @@ export default function MarksSubmittedPage() {
                   <TableBody>
                     {classPaginatedData.map((row, idx) => (
                       <TableRow key={idx}>
-                        <TableCell className="font-medium text-gray-800">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.className}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.lecturer}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.students}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.submissionDate}
                         </TableCell>
-                        <TableCell className="text-gray-700">
+                        <TableCell className="text-gray-700 text-sm">
                           {row.deadline}
                         </TableCell>
                         <TableCell>

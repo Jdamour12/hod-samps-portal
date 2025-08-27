@@ -192,7 +192,7 @@ export default function AttendancePage() {
         <TabsList className="grid w-full grid-cols-4 bg-gray-50 gap-10">
           <TabsTrigger
             value="overview"
-            className="data-[state=active]:bg-[#026892] data-[state=active]:text-white hover:bg-gray-200 hover:text-black hover:data-[state=active]:bg-[#026892] border border-gray-200 w-[150px] text-center rounded-md "
+            className="data-[state=active]:bg-[#026892] data-[state=active]:text-white hover:bg-gray-200 hover:text-black hover:data-[state=active]:bg-[#026892]/90 border border-gray-200 w-[150px] text-center rounded-md "
           >
             Module Overview
           </TabsTrigger>
@@ -202,7 +202,7 @@ export default function AttendancePage() {
           >
             Student Details
           </TabsTrigger>
-          <TabsTrigger value="daily" className="data-[state=active]:bg-[#026892] data-[state=active]:text-white hover:hover:bg-gray-100 hover:text-black border border-gray-200 w-[150px] text-center rounded-md">
+          <TabsTrigger value="daily" className="data-[state=active]:bg-[#026892] data-[state=active]:text-white hover:bg-hover:bg-gray-100 hover:text-black border border-gray-200 w-[150px] text-center rounded-md">
             Daily Tracking
           </TabsTrigger>
           <TabsTrigger
@@ -253,25 +253,25 @@ export default function AttendancePage() {
               </div>
 
               <Table>
-                <TableHeader className="bg-blue-50">
+                <TableHeader className="bg-gray-50">
                   <TableRow>
-                    <TableHead>Module</TableHead>
-                    <TableHead>Lecturer</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Total Classes</TableHead>
-                    <TableHead>Average Attendance</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Module</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Lecturer</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Students</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Total Classes</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Average Attendance</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Status</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Last Updated</TableHead>
+                    <TableHead className="text-gray-700 font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {attendanceOverview.map((module, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{module.module}</TableCell>
-                      <TableCell>{module.lecturer}</TableCell>
-                      <TableCell>{module.studentsCount}</TableCell>
-                      <TableCell>{module.totalClasses}</TableCell>
+                      <TableCell className="text-gray-700 text-sm">{module.module}</TableCell>
+                      <TableCell className="text-gray-700 text-sm">{module.lecturer}</TableCell>
+                      <TableCell className="text-gray-700 text-sm">{module.studentsCount}</TableCell>
+                      <TableCell className="text-gray-700 text-sm">{module.totalClasses}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <span className={`font-semibold ${getAttendanceColor(module.averageAttendance)}`}>
@@ -280,8 +280,8 @@ export default function AttendancePage() {
                           <Progress value={module.averageAttendance} className="w-16 h-2" />
                         </div>
                       </TableCell>
-                      <TableCell>{getStatusBadge(module.status)}</TableCell>
-                      <TableCell>{module.lastUpdated}</TableCell>
+                      <TableCell className="text-gray-700 text-sm">{getStatusBadge(module.status)}</TableCell>
+                      <TableCell className="text-gray-700 text-sm">{module.lastUpdated}</TableCell>
                       <TableCell>
                         <Dialog>
                           <DialogTrigger asChild>
@@ -301,21 +301,21 @@ export default function AttendancePage() {
                               <Table>
                                 <TableHeader>
                                   <TableRow>
-                                    <TableHead>Student ID</TableHead>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Classes Attended</TableHead>
-                                    <TableHead>Total Classes</TableHead>
-                                    <TableHead>Percentage</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-gray-700 font-semibold">Student ID</TableHead>
+                                    <TableHead className="text-gray-700 font-semibold">Name</TableHead>
+                                    <TableHead className="text-gray-700 font-semibold">Classes Attended</TableHead>
+                                    <TableHead className="text-gray-700 font-semibold">Total Classes</TableHead>
+                                    <TableHead className="text-gray-700 font-semibold">Percentage</TableHead>
+                                    <TableHead className="text-gray-700 font-semibold">Status</TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                   {studentAttendanceDetails.map((student) => (
                                     <TableRow key={student.studentId}>
-                                      <TableCell>{student.studentId}</TableCell>
-                                      <TableCell>{student.name}</TableCell>
-                                      <TableCell>{student.attended}</TableCell>
-                                      <TableCell>{student.totalClasses}</TableCell>
+                                      <TableCell className="text-gray-700 text-sm font-semibold">{student.studentId}</TableCell>
+                                      <TableCell className="text-gray-700 text-sm">{student.name}</TableCell>
+                                      <TableCell className="text-gray-700 text-sm">{student.attended}</TableCell>
+                                      <TableCell className="text-gray-700 text-sm">{student.totalClasses}</TableCell>
                                       <TableCell className={getAttendanceColor(student.percentage)}>
                                         {student.percentage}%
                                       </TableCell>
