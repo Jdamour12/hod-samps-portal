@@ -30,7 +30,7 @@ export default function ExamsPage() {
       <Card className="bg-white shadow-sm border border-gray-200">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold text-gray-900">Exam Schedule</CardTitle>
-          <Button size="sm" className="gap-1 bg-samps-blue-600 hover:bg-samps-blue-700 text-white">
+          <Button size="sm" className="gap-1 bg-samps-blue-600 hover:bg-bg-[#026892]/90 text-white">
             <PlusCircle className="h-4 w-4" />
             Add Exam
           </Button>
@@ -39,16 +39,16 @@ export default function ExamsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="text-gray-700">Module</TableHead>
-                <TableHead className="text-gray-700">Date</TableHead>
-                <TableHead className="text-gray-700">Time</TableHead>
-                <TableHead className="text-gray-700">Venue</TableHead>
-                <TableHead className="text-right text-gray-700">Actions</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Module</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Date</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Time</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Venue</TableHead>
+                <TableHead className="text-right text-gray-800 font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow className="hover:bg-gray-50">
-                <TableCell className="font-medium text-gray-800">CSC101</TableCell>
+              <TableRow>
+                <TableCell className="text-gray-800">CSC101</TableCell>
                 <TableCell className="text-gray-700">2024-12-10</TableCell>
                 <TableCell className="text-gray-700">09:00 AM</TableCell>
                 <TableCell className="text-gray-700">Exam Hall 1</TableCell>
@@ -61,8 +61,8 @@ export default function ExamsPage() {
                   </Button>
                 </TableCell>
               </TableRow>
-              <TableRow className="hover:bg-gray-50">
-                <TableCell className="font-medium text-gray-800">MTH203</TableCell>
+              <TableRow>
+                <TableCell className="text-gray-800">MTH203</TableCell>
                 <TableCell className="text-gray-700">2024-12-12</TableCell>
                 <TableCell className="text-gray-700">02:00 PM</TableCell>
                 <TableCell className="text-gray-700">Exam Hall 2</TableCell>
@@ -75,8 +75,8 @@ export default function ExamsPage() {
                   </Button>
                 </TableCell>
               </TableRow>
-              <TableRow className="hover:bg-gray-50">
-                <TableCell className="font-medium text-gray-800">ENG101</TableCell>
+              <TableRow>
+                <TableCell className="text-gray-800">ENG101</TableCell>
                 <TableCell className="text-gray-700">2024-12-15</TableCell>
                 <TableCell className="text-gray-700">10:00 AM</TableCell>
                 <TableCell className="text-gray-700">Lecture Hall 3</TableCell>

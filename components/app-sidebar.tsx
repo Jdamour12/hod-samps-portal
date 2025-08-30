@@ -56,7 +56,7 @@ const hodNavigation = [
     url: "/dashboard",
   },
   {
-    title: "Department Management",
+    title: "Department",
     icon: Building2,
     items: [
       { title: "Overview", url: "/department/overview" },
@@ -162,7 +162,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="bg-white border-none">
-      <SidebarHeader className=" border-b border-gray-300">
+      <SidebarHeader className="app-sidebar border-b border-gray-300">
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard" className="flex items-center gap-2">
@@ -180,12 +180,12 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="py-2">
         {hodNavigation.map((item) => (
-          <SidebarGroup key={item.title} className="px-2">
+          <SidebarGroup key={item.title} className="px-2 font-small">
             {item.items ? (
               <Collapsible
                 open={openCollapsible === item.title}
                 onOpenChange={() => handleCollapsibleToggle(item.title)}
-                className="group/collapsible"
+                className=" submenu  font-semibold"
               >
                 <SidebarGroupLabel asChild>
                   <CollapsibleTrigger
@@ -196,13 +196,13 @@ export function AppSidebar() {
                     }`}
                   >
                     {item.icon && <item.icon className="h-4 w-4" />}
-                    <span>{item.title}</span>
+                    <span className="font-bold text-sm text-gray-700">{item.title}</span>
                     <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180 text-black" />
                   </CollapsibleTrigger>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
                   <SidebarGroupContent className="py-1 pl-4">
-                    <SidebarMenu>
+                    <SidebarMenu className="font-normal">
                       {item.items.map((subItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton asChild>
@@ -241,7 +241,7 @@ export function AppSidebar() {
                     }`}
                   >
                     {item.icon && <item.icon className="h-4 w-4" />}
-                    <span>{item.title}</span>
+                    <span className="font-bold text-sm text-gray-700">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarGroupLabel>

@@ -20,6 +20,8 @@ export function HeaderContent({ children }: { children: React.ReactNode }) {
   const [selectedRole, setSelectedRole] = React.useState("HOD");
   const [selectedAcademicPeriod, setSelectedAcademicPeriod] =
     React.useState("2024 Semester 1");
+  const [selectedAcademicYear, setSelectedAcademicYear] =
+    React.useState("2024 - 2025");
   const roles = ["Lecturer", "HOD", "Dean", "DTLE"];
 
   return (
@@ -33,6 +35,30 @@ export function HeaderContent({ children }: { children: React.ReactNode }) {
         </div>
         {/* Notifications, Selectors, User */}
         <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 min-w-[150px]"
+              >
+                {selectedAcademicYear}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onSelect={() => setSelectedAcademicYear("2024 - 2025")}
+              >
+                2024 - 2025
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setSelectedAcademicYear("2023 - 2024")}
+              >
+                2023 - 2024
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

@@ -247,7 +247,7 @@ export default function DepartmentCalendarPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-black">Department Calendar</h1>
+          <h1 className="text-2xl font-bold text-black">Department Calendar</h1>
           <p className="text-gray-600 mt-1">Manage and view all department events and deadlines</p>
         </div>
         <div className="flex items-center gap-2">
@@ -315,7 +315,7 @@ export default function DepartmentCalendarPage() {
 
       {/* Quick Stats - Moved to top as requested */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+        <Card className="bg-[#026892] from-blue-500 to-blue-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -400,7 +400,7 @@ export default function DepartmentCalendarPage() {
                 variant={viewMode === "month" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("month")}
-                className={viewMode === "month" ? "bg-samps-blue-600 hover:bg-hover:bg-[#026892]/90" : ""}
+                className={viewMode === "month" ? "bg-samps-blue-600 hover:bg-[#026892]/90" : ""}
               >
                 Month
               </Button>
@@ -408,7 +408,7 @@ export default function DepartmentCalendarPage() {
                 variant={viewMode === "week" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("week")}
-                className={viewMode === "week" ? "bg-samps-blue-600 hover:bg-hover:bg-[#026892]/90" : ""}
+                className={viewMode === "week" ? "bg-samps-blue-600 hover:bg-[#026892]/90" : ""}
               >
                 Week
               </Button>
@@ -416,7 +416,7 @@ export default function DepartmentCalendarPage() {
                 variant={viewMode === "day" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("day")}
-                className={viewMode === "day" ? "bg-samps-blue-600 hover:hover:bg-[#026892]/90" : ""}
+                className={viewMode === "day" ? "bg-samps-blue-600 hover:bg-[#026892]/90" : ""}
               >
                 Day
               </Button>

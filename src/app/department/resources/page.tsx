@@ -32,11 +32,11 @@ export default function ResourcesPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="text-gray-700">File Name</TableHead>
-                <TableHead className="text-gray-700">Type</TableHead>
-                <TableHead className="text-gray-700">Uploaded By</TableHead>
-                <TableHead className="text-gray-700">Date</TableHead>
-                <TableHead className="text-right text-gray-700">Actions</TableHead>
+                <TableHead className="text-gray-800 font-semibold">File Name</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Type</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Uploaded By</TableHead>
+                <TableHead className="text-gray-800 font-semibold">Date</TableHead>
+                <TableHead className="text-right text-gray-800 font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

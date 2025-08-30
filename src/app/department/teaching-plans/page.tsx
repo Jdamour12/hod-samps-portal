@@ -185,7 +185,7 @@ export default function TeachingPlansPage() {
           </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-samps-blue-600 hover:bg-samps-blue-700 text-white">
+              <Button className="bg-samps-blue-600 hover:bg-[#026892]/90 text-white">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create Plan
               </Button>

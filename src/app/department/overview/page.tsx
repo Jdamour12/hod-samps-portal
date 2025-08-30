@@ -66,7 +66,7 @@ export default function DepartmentOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-samps-blue-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <Users className="h-6 w-6 text-samps-blue-600" />
                 <div>
                   <div className="text-xs text-gray-600">Total Lecturers</div>
@@ -75,7 +75,7 @@ export default function DepartmentOverviewPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-samps-green-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <BookOpen className="h-6 w-6 text-samps-green-600" />
                 <div>
                   <div className="text-xs text-gray-600">Total Modules</div>
@@ -84,7 +84,7 @@ export default function DepartmentOverviewPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-samps-yellow-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <GraduationCap className="h-6 w-6 text-samps-yellow-600" />
                 <div>
                   <div className="text-xs text-gray-600">Active Students</div>
@@ -93,7 +93,7 @@ export default function DepartmentOverviewPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-samps-green-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <Award className="h-6 w-6 text-samps-green-600" />
                 <div>
                   <div className="text-xs text-gray-600">Average Pass Rate</div>
@@ -102,7 +102,7 @@ export default function DepartmentOverviewPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-samps-blue-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <LineChart className="h-6 w-6 text-samps-blue-600" />
                 <div>
                   <div className="text-xs text-gray-600">
@@ -113,7 +113,7 @@ export default function DepartmentOverviewPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-samps-green-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <CheckCircle className="h-6 w-6 text-samps-green-600" />
                 <div>
                   <div className="text-xs text-gray-600">

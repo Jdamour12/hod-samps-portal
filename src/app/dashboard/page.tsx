@@ -262,11 +262,11 @@ export default function HODDashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 text-black font-semibold">
-                  <TableHead className="text-black">Item</TableHead>
-                  <TableHead className="text-black ">Type</TableHead>
-                  <TableHead className="hidden md:table-cell text-black">Submitted By</TableHead>
-                  <TableHead className="hidden md:table-cell text-black">Date</TableHead>
-                  <TableHead className="text-right text-black">Actions</TableHead>
+                  <TableHead className="text-black font-semibold">Item</TableHead>
+                  <TableHead className="text-black font-semibold">Type</TableHead>
+                  <TableHead className="hidden md:table-cell text-black font-semibold">Submitted By</TableHead>
+                  <TableHead className="hidden md:table-cell text-black font-semibold">Date</TableHead>
+                  <TableHead className="text-right text-black font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
