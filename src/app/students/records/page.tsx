@@ -8,9 +8,9 @@ import { Pie, PieChart as RechartsPieChart, ResponsiveContainer, Legend, Cell } 
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 const studentDemographicsData = [
-  { name: "B.Sc. Computer Science", value: 700, color: "hsl(var(--samps-blue-500))" },
-  { name: "M.Sc. Data Science", value: 300, color: "hsl(var(--samps-green-500))" },
-  { name: "Ph.D. AI", value: 200, color: "hsl(var(--samps-orange-500))" },
+  { name: "B.Sc. Computer Science", value: 700, color: "#026892" },
+  { name: "M.Sc. Data Science", value: 300, color: "#38A06C" },
+  { name: "Ph.D. AI", value: 200, color: "#C2410C" },
 ]
 
 export default function StudentRecordsPage() {

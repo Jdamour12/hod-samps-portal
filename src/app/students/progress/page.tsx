@@ -94,7 +94,7 @@ export default function StudentProgressPage() {
             config={{
               "Average Grade": {
                 label: "Average Grade",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
             }}
             className="h-64 w-full"
@@ -106,7 +106,7 @@ export default function StudentProgressPage() {
                 <YAxis domain={[0, 100]} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Legend />
-                <Bar dataKey="Average Grade" fill="var(--color-Average-Grade)" />
+                <Bar dataKey="Average Grade" fill="#026892" />
               </RechartsBarChart>
             </ResponsiveContainer>
           </ChartContainer>

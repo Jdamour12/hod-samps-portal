@@ -93,7 +93,7 @@ export default function StaffPerformancePage() {
             config={{
               "Average Rating": {
                 label: "Average Rating",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
             }}
             className="h-64 w-full"

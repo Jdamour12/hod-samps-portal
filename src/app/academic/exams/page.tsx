@@ -104,11 +104,11 @@ export default function ExamsPage() {
             config={{
               "Average Score": {
                 label: "Average Score",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
               "Pass Rate": {
                 label: "Pass Rate",
-                color: "hsl(var(--samps-green-500))",
+                color: "#026892",
               },
             }}
             className="h-64 w-full"

@@ -82,11 +82,11 @@ export default function QAMetricsPage() {
             config={{
               "Student Satisfaction": {
                 label: "Student Satisfaction (Scale of 5)",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
               "Research Output": {
                 label: "Research Output (Papers)",
-                color: "hsl(var(--samps-green-500))",
+                color: "#026892",
               },
             }}
             className="h-64 w-full"

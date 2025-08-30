@@ -29,5 +29,6 @@ export default async function RootLayout({
 }
 
 export const metadata = {
-  generator: "app",
+  title: "SAMPS UR - HOD Portal",
+  description: "HOD Dashboard for SAMPS UR",
 };

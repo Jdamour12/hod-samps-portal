@@ -78,11 +78,11 @@ export default function WorkloadPage() {
             config={{
               teaching: {
                 label: "Teaching Hours",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
               admin: {
                 label: "Admin Load",
-                color: "hsl(var(--samps-green-500))",
+                color: "#38A06C",
               },
             }}
             className="h-64 w-full"

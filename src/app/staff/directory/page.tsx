@@ -8,9 +8,9 @@ import { Pie, PieChart as RechartsPieChart, ResponsiveContainer, Legend, Cell } 
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 const staffRolesData = [
-  { name: "Professors", value: 5, color: "hsl(var(--samps-blue-500))" },
-  { name: "Lecturers", value: 15, color: "hsl(var(--samps-green-500))" },
-  { name: "Research Assistants", value: 5, color: "hsl(var(--samps-orange-500))" },
+  { name: "Professors", value: 5, color: "#026892" },
+  { name: "Lecturers", value: 15, color: "#38A06C" },
+  { name: "Research Assistants", value: 5, color: "#C2410C" },
   { name: "Admin Staff", value: 3, color: "hsl(var(--samps-red-500))" },
 ]
 

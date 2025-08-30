@@ -99,7 +99,7 @@ export default function ResourcesPage() {
             config={{
               usage: {
                 label: "Usage (%)",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
             }}
             className="h-64 w-full"

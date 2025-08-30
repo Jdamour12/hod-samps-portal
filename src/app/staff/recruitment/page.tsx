@@ -91,7 +91,7 @@ export default function RecruitmentPage() {
             config={{
               count: {
                 label: "Number of Candidates",
-                color: "hsl(var(--samps-blue-500))",
+                color: "#026892",
               },
             }}
             className="h-64 w-full"
