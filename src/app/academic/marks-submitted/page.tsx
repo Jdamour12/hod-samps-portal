@@ -24,6 +24,8 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 
 // Dummy data for demonstration
 // Sample chart data for grade distribution
@@ -135,6 +137,10 @@ export default function MarksSubmittedPage() {
     (modulePage - 1) * modulePageSize,
     modulePage * modulePageSize
   );
+  // Handle back to marks from detailed view
+  function handleBackToMarks() {
+    router.back();
+  }
 
   // Dummy class data for demonstration
   const classData = [
@@ -200,6 +206,18 @@ export default function MarksSubmittedPage() {
       <p className="text-gray-600 text-base mb-2">
         Review and approve marks submitted by lecturers
       </p>
+
+      {/* Back to module selection */}
+          <Button
+        variant="outline"
+        className="mb-4 flex items-center gap-2 hover:bg-gray-200 hover:text-gray-900 text-gray-600 border border-none bg-gray-50 h-8 my-5"
+        onClick={handleBackToMarks}
+      >
+        <ChevronRight className="h-4 w-4 rotate-180 mr-2" />
+        
+        Back to Module Selection
+      </Button>
+
       <div className="flex items-center justify-between mb-4 mt-4">
         <div className="flex gap-2 w-full">
           <button 
@@ -247,6 +265,7 @@ export default function MarksSubmittedPage() {
           <p className="text-gray-600 text-sm mb-4">
             Review and manage marks submitted by department lecturers
           </p>
+
           {/* Tabs for Module and Class */}
           <div className="flex gap-2 mb-6">
             <button
