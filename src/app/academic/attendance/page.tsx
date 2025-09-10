@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
-import { Download, Eye, AlertTriangle, CheckCircle, Users } from "lucide-react"
+import { Download, Eye, AlertTriangle, CheckCircle, Users, ChevronRight } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -86,6 +87,7 @@ const dailyAttendance = [
 ]
 
 export default function AttendancePage() {
+  const router = useRouter();
   const [selectedSemester, setSelectedSemester] = useState("Year 1")
   const [selectedModule, setSelectedModule] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
@@ -103,6 +105,7 @@ export default function AttendancePage() {
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
+
   }
 
   const getAttendanceColor = (percentage: number) => {
@@ -110,6 +113,11 @@ export default function AttendancePage() {
     if (percentage >= 80) return "text-blue-600"
     if (percentage >= 70) return "text-yellow-600"
     return "text-red-600"
+  }
+
+  // Handle back to marks from detailed view
+  function handleBackToMarks() {
+    router.back();
   }
 
   return (
@@ -124,6 +132,17 @@ export default function AttendancePage() {
           Export Attendance Report
         </Button>
       </div>
+
+      {/* Back to module selection */}
+          <Button
+        variant="outline"
+        className="mb-4 flex items-center gap-2 hover:bg-gray-200 hover:text-gray-900 text-gray-600 border border-none bg-gray-50 w-[210px] h-8"
+        onClick={handleBackToMarks}
+      >
+        <ChevronRight className="h-4 w-4 rotate-180 mr-2" />
+        
+        Back to Module Selection
+      </Button>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
