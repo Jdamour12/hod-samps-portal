@@ -86,6 +86,7 @@ const hodNavigation = [
     items: [
       { title: "Directory", url: "/staff/directory" },
       { title: "Workload", url: "/staff/workload" },
+      { title: "Module Assignments", url: "/staff/module-assignments" },
       { title: "Performance", url: "/staff/performance" },
       { title: "Leave", url: "/staff/leave" },
       { title: "Development", url: "/staff/development" },
