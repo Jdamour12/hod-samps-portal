@@ -76,8 +76,8 @@ const hodNavigation = [
       //{ title: "Assessment", url: "/academic/assessment" },
       { title: "Timetables", url: "/academic/timetables" },
       { title: "Exams", url: "/academic/exams" },
-      { title: "Marks Submitted", url: "/academic/marks-submitted" },
-      { title: "Attendance", url: "/academic/attendance" },
+      { title: "Marks Submitted", url: "/academic/modules?return=marks-submitted" },
+      { title: "Attendance", url: "/academic/modules?return=attendance" },
     ],
   },
   {
@@ -250,12 +250,12 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-gray-700">
+      {/* <SidebarFooter className="p-4 border-t border-gray-700">
         <div className="text-xs text-gray-400 space-y-1">
           <p>Version 2.1.0</p>
           <p>Last Updated: Aug 2025</p>
         </div>
-      </SidebarFooter>
+      </SidebarFooter> */}
     </Sidebar>
   );
 }
