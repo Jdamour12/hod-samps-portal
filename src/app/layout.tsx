@@ -1,8 +1,7 @@
 import type React from "react";
 import { cookies } from "next/headers";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { HeaderContent } from "@/components/header-content";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ConditionalLayout } from "@/components/ConditionalLayout";
 import "./globals.css";
 import { Inter } from "next/font/google";
 
@@ -19,10 +18,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <HeaderContent>{children}</HeaderContent>
-        </SidebarProvider>
+        <AuthProvider>
+          <ConditionalLayout defaultOpen={defaultOpen}>
+            {children}
+          </ConditionalLayout>
+        </AuthProvider>
       </body>
     </html>
   );
