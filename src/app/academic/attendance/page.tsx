@@ -133,17 +133,6 @@ export default function AttendancePage() {
         </Button>
       </div>
 
-      {/* Back to module selection */}
-          <Button
-        variant="outline"
-        className="mb-4 flex items-center gap-2 hover:bg-gray-200 hover:text-gray-900 text-gray-600 border border-none bg-gray-50 w-[210px] h-8"
-        onClick={handleBackToMarks}
-      >
-        <ChevronRight className="h-4 w-4 rotate-180 mr-2" />
-        
-        Back to Module Selection
-      </Button>
-
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-white shadow-sm">

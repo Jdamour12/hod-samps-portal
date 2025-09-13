@@ -115,8 +115,6 @@ export default function MarksSubmittedPage() {
   // Main tabs: 'mark-submissions', 'analytics', 'deadlines'
   const [mainActiveTab, setMainActiveTab] = React.useState("mark-submissions");
   
-  // Sub tabs: 'module' or 'class' (only for mark-submissions tab)
-  const [activeTab, setActiveTab] = React.useState("module");
   
   // Module Table State
   const [modulePage, setModulePage] = React.useState(1);
@@ -142,57 +140,6 @@ export default function MarksSubmittedPage() {
     router.back();
   }
 
-  // Dummy class data for demonstration
-  const classData = [
-    {
-      className: "CS101 - Computer Science Year 1",
-      lecturer: "Dr. Alice Smith",
-      students: 45,
-      submissionDate: "2024-12-15",
-      deadline: "2024-12-20",
-      status: "Pending",
-    },
-    {
-      className: "CS201 - Computer Science Year 2",
-      lecturer: "Prof. Bob Johnson",
-      students: 38,
-      submissionDate: "2024-12-14",
-      deadline: "2024-12-20",
-      status: "Approved",
-    },
-    {
-      className: "IT101 - IT Year 1",
-      lecturer: "Ms. Carol Davis",
-      students: 42,
-      submissionDate: "Not submitted",
-      deadline: "2024-12-18",
-      status: "Overdue",
-    },
-    {
-      className: "ML301 - Machine Learning",
-      lecturer: "Dr. David Brown",
-      students: 35,
-      submissionDate: "2024-12-16",
-      deadline: "2024-12-20",
-      status: "Rejected",
-    },
-  ];
-  // Class Table State
-  const [classPage, setClassPage] = React.useState(1);
-  const [classSearch, setClassSearch] = React.useState("");
-  const classPageSize = 4;
-  const classFilteredData = classData.filter(
-    (row) =>
-      (row.className &&
-        row.className.toLowerCase().includes(classSearch.toLowerCase())) ||
-      (row.lecturer &&
-        row.lecturer.toLowerCase().includes(classSearch.toLowerCase()))
-  );
-  const classTotalPages = Math.ceil(classFilteredData.length / classPageSize);
-  const classPaginatedData = classFilteredData.slice(
-    (classPage - 1) * classPageSize,
-    classPage * classPageSize
-  );
 
   // Deadlines state
   const [selectedModule, setSelectedModule] = React.useState("");
@@ -206,17 +153,6 @@ export default function MarksSubmittedPage() {
       <p className="text-gray-600 text-base mb-2">
         Review and approve marks submitted by lecturers
       </p>
-
-      {/* Back to module selection */}
-          <Button
-        variant="outline"
-        className="mb-4 flex items-center gap-2 hover:bg-gray-200 hover:text-gray-900 text-gray-600 border border-none bg-gray-50 h-8 my-5"
-        onClick={handleBackToMarks}
-      >
-        <ChevronRight className="h-4 w-4 rotate-180 mr-2" />
-        
-        Back to Module Selection
-      </Button>
 
       <div className="flex items-center justify-between mb-4 mt-4">
         <div className="flex gap-2 w-full">
@@ -266,32 +202,8 @@ export default function MarksSubmittedPage() {
             Review and manage marks submitted by department lecturers
           </p>
 
-          {/* Tabs for Module and Class */}
-          <div className="flex gap-2 mb-6">
-            <button
-              className={`px-6 py-2 rounded-md font-medium text-sm border ${
-                activeTab === "module"
-                  ? "bg-[#026892] text-white border-gray-200 hover:bg-[#026892]/90"
-                  : "bg-white text-black border-gray-200 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveTab("module")}
-            >
-              Module
-            </button>
-            <button
-              className={`px-6 py-2 rounded-md font-medium text-sm border ${
-                activeTab === "class"
-                  ? "bg-[#026892] text-white font-medium hover:bg-[#026892]/90 border-gray-200"
-                  : "bg-white text-black border-gray-200 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveTab("class")}
-            >
-              Class
-            </button>
-          </div>
-          {/* Table for Module Tab */}
-          {activeTab === "module" && (
-            <>
+          {/* Module Data Table */}
+          <>
               <div className="flex gap-2 mb-4 items-center">
                 <select className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white">
                   <option>All Status</option>
@@ -509,235 +421,6 @@ export default function MarksSubmittedPage() {
                 </button>
               </div>
             </>
-          )}
-          {/* Table for Class Tab */}
-          {activeTab === "class" && (
-            <>
-              <div className="flex gap-2 mb-4 items-center">
-                <select className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white">
-                  <option>All Years</option>
-                  <option>Year 1</option>
-                  <option>Year 2</option>
-                  <option>Year 3</option>
-                </select>
-                <select className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white">
-                  <option>All Status</option>
-                  <option>Pending</option>
-                  <option>Approved</option>
-                  <option>Overdue</option>
-                  <option>Rejected</option>
-                </select>
-                <div className="relative w-full max-w-xs">
-                  <input
-                    type="search"
-                    value={classSearch}
-                    onChange={(e) => {
-                      setClassSearch(e.target.value);
-                      setClassPage(1);
-                    }}
-                    placeholder="Search class, lecturer..."
-                    className="border rounded-md px-10 py-2 text-sm w-full bg-white focus:border-[#0891b2] focus:ring-[#0891b2]"
-                  />
-                  <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="text-gray-700 font-semibold">Class</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Lecturer</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Students</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Submission Date
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Deadline</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Status</TableHead>
-                      <TableHead className="text-right text-gray-700 font-semibold">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {classPaginatedData.map((row, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="text-gray-700 text-sm">
-                          {row.className}
-                        </TableCell>
-                        <TableCell className="text-gray-700 text-sm">
-                          {row.lecturer}
-                        </TableCell>
-                        <TableCell className="text-gray-700 text-sm">
-                          {row.students}
-                        </TableCell>
-                        <TableCell className="text-gray-700 text-sm">
-                          {row.submissionDate}
-                        </TableCell>
-                        <TableCell className="text-gray-700 text-sm">
-                          {row.deadline}
-                        </TableCell>
-                        <TableCell>
-                          {row.status === "Pending" && (
-                            <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                              <svg
-                                className="h-4 w-4 inline"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle cx="12" cy="12" r="10" />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M12 8v4l2 2"
-                                />
-                              </svg>
-                              Pending
-                            </span>
-                          )}
-                          {row.status === "Approved" && (
-                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                              <svg
-                                className="h-4 w-4 inline"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Approved
-                            </span>
-                          )}
-                          {row.status === "Overdue" && (
-                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                              <svg
-                                className="h-4 w-4 inline"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle cx="12" cy="12" r="10" />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M12 8v4l2 2"
-                                />
-                              </svg>
-                              Overdue
-                            </span>
-                          )}
-                          {row.status === "Rejected" && (
-                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                              <svg
-                                className="h-4 w-4 inline"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                              Rejected
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right flex gap-2 justify-end">
-                          <button
-                            className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium"
-                            onClick={() => {
-                              // Use router to navigate to the class details page
-                              router.push(
-                                `/academic/marks-submitted/class/${encodeURIComponent(
-                                  row.className
-                                )}/2025`
-                              );
-                            }}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>{" "}
-                            View
-                          </button>
-                          {row.status === "Overdue" && (
-                            <button className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M17 8v6m0 0l-3-3m3 3l3-3"
-                                />
-                              </svg>{" "}
-                              Remind
-                            </button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {/* Pagination Controls */}
-              <div className="flex justify-end items-center mt-4 gap-2">
-                <button
-                  className="px-3 py-1 rounded-md border text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
-                  onClick={() => setClassPage((p) => Math.max(1, p - 1))}
-                  disabled={classPage === 1}
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {classPage} of {classTotalPages}
-                </span>
-                <button
-                  className="px-3 py-1 rounded-md border text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
-                  onClick={() =>
-                    setClassPage((p) => Math.min(classTotalPages, p + 1))
-                  }
-                  disabled={classPage === classTotalPages}
-                >
-                  Next
-                </button>
-              </div>
-            </>
-          )}
         </Card>
       )}
 

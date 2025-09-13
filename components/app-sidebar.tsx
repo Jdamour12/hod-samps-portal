@@ -76,8 +76,9 @@ const hodNavigation = [
       //{ title: "Assessment", url: "/academic/assessment" },
       { title: "Timetables", url: "/academic/timetables" },
       { title: "Exams", url: "/academic/exams" },
-      { title: "Marks Submitted", url: "/academic/modules?return=marks-submitted" },
-      { title: "Attendance", url: "/academic/modules?return=attendance" },
+      { title: "Marks Submitted", url: "/academic/marks-submitted" },
+      { title: "Classes Marks", url: "/academic/classes-marks" },
+      { title: "Attendance", url: "/academic/attendance" },
     ],
   },
   {

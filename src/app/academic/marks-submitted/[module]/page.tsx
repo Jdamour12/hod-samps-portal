@@ -94,7 +94,6 @@ export default function StudentMarksPage() {
       l2: "8",
       l3: "7",
       labAvg: "7.3",
-      exam: "45",
       total: "83.3",
       remark: "PASS",
     },
@@ -112,7 +111,6 @@ export default function StudentMarksPage() {
       l2: "7",
       l3: "6",
       labAvg: "6.3",
-      exam: "38",
       total: "68.3",
       remark: "PASS",
     },
@@ -130,7 +128,6 @@ export default function StudentMarksPage() {
       l2: "5",
       l3: "4",
       labAvg: "4.3",
-      exam: "22",
       total: "38.3",
       remark: "FAIL",
     },
@@ -149,7 +146,6 @@ export default function StudentMarksPage() {
       l2: "",
       l3: "",
       labAvg: "",
-      exam: "",
       total: "0.00",
       remark: "FAIL",
     })),
@@ -282,12 +278,6 @@ export default function StudentMarksPage() {
                   </th>
                   <th
                     rowSpan={2}
-                    className="bg-[#e2eaf6] border p-2 text-xs font-semibold text-gray-700"
-                  >
-                    Exam
-                  </th>
-                  <th
-                    rowSpan={2}
                     className="bg-[#f6d2d2] border p-2 text-xs font-semibold text-gray-700"
                   >
                     Total Marks (50%)
@@ -393,9 +383,6 @@ export default function StudentMarksPage() {
                       </td>
                       <td className="border p-2 text-center bg-[#f6eae2]">
                         {marks[globalIdx].labAvg}
-                      </td>
-                      <td className="border p-2 text-center bg-[#e2eaf6]">
-                        {marks[globalIdx].exam}
                       </td>
                       <td className="border p-2 text-center bg-[#f6d2d2] font-bold">
                         {marks[globalIdx].total}
