@@ -1,12 +1,16 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://ursmartmonitoring.ur.ac.rw/api/v1';
+// Use local proxy endpoints to avoid CORS issues in development
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? '/api'  // Use Next.js API routes as proxy
+  : 'https://ursmartmonitoring.ur.ac.rw/api/v1'; // Direct API in production
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
@@ -33,7 +37,11 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           try {
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+            const refreshEndpoint = process.env.NODE_ENV === 'development'
+              ? '/api/auth/refresh'
+              : 'https://ursmartmonitoring.ur.ac.rw/api/v1/auth/refresh';
+              
+            const response = await axios.post(refreshEndpoint, {
               refreshToken,
             });
             

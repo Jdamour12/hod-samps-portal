@@ -92,31 +92,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Try different parameter combinations that your backend might expect
-      const loginPayloads = [
-        { usernameOrEmail, password }, // Your current format
-        { username: usernameOrEmail, password }, // Alternative format 1
-        { email: usernameOrEmail, password }, // Alternative format 2 (if email)
-      ];
+      // The API expects 'usernameOrEmail' field based on the validation error
+      const payload = {
+        usernameOrEmail,
+        password
+      };
 
-      let response;
-      let lastError;
-
-      // Try each payload format
-      for (const payload of loginPayloads) {
-        try {
-          response = await api.post<LoginResponse>("/auth/login", payload);
-          break; // Success, exit loop
-        } catch (error: any) {
-          lastError = error;
-          console.log(`Login attempt with payload ${JSON.stringify(payload)} failed:`, error.response?.data?.message);
-        }
-      }
-
-      // If all attempts failed, throw the last error
-      if (!response) {
-        throw lastError;
-      }
+      const response = await api.post<LoginResponse>("/auth/login", payload);
 
       const { data } = response.data;
 
@@ -137,9 +119,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRoles(data.roles);
       setIsAuthenticated(true);
     } catch (error: any) {
-      console.error("Login error:", error);
-      console.error("Error response:", error?.response?.data);
-      throw error?.response?.data?.message || error?.message || "Login failed.";
+      // Handle different types of errors
+      if (error?.response?.data?.message) {
+        throw error.response.data.message;
+      } else if (error?.response?.data?.errors) {
+        // Handle validation errors
+        const errors = error.response.data.errors;
+        if (Array.isArray(errors)) {
+          throw errors.join(', ');
+        } else if (typeof errors === 'object') {
+          throw Object.values(errors).join(', ');
+        }
+        throw 'Validation error: ' + JSON.stringify(errors);
+      } else if (error?.response?.status === 400) {
+        throw "Invalid request. Please check your credentials format.";
+      } else if (error?.response?.status === 401) {
+        throw "Invalid username or password. Please try again.";
+      } else if (error?.response?.status >= 500) {
+        throw "Server error. Please try again later.";
+      } else if (error?.message) {
+        throw error.message;
+      } else {
+        throw "Login failed. Please check your credentials and try again.";
+      }
     } finally {
       setIsLoading(false);
     }

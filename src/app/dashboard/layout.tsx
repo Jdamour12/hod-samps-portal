@@ -7,6 +7,6 @@ export default function LecturerDashboard({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRoles={["HOD"]}>{children}</ProtectedRoute>
+    <ProtectedRoute requiredRoles={["HEAD_OF_DEPARTMENT", "SUPERADMIN"]}>{children}</ProtectedRoute>
   );
 }
