@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, Search, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bell, Search, ChevronDown, User, Settings, HelpCircle, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,14 +16,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function HeaderContent({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const [selectedRole, setSelectedRole] = React.useState("HOD");
   const [selectedAcademicPeriod, setSelectedAcademicPeriod] =
     React.useState("2024 Semester 1");
   const [selectedAcademicYear, setSelectedAcademicYear] =
     React.useState("2024 - 2025");
   const roles = ["Lecturer", "HOD", "Dean", "DTLE"];
+
+  const handleDropdownLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   return (
     <SidebarInset>
@@ -120,26 +129,55 @@ export function HeaderContent({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="rounded-full border border-gray-300 h-9 w-9 hover:bg-gray-100"
+                className="relative h-9 w-9 rounded-full hover:bg-gray-100"
               >
                 <Avatar className="h-9 w-9">
                   <AvatarImage
-                    src="/placeholder-user.jpg?height=32&width=32&query=user%20avatar"
-                    alt="User Avatar"
+                    src={
+                      user?.profilePictureUrl ||
+                      "/profile.webp?height=36&width=36"
+                    }
+                    alt={user?.fullName || "User"}
                   />
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarFallback className="bg-[#026892]/10 text-[#026892] font-medium">
+                    {user?.firstName?.[0]}
+                    {user?.lastName?.[0]}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.fullName || user?.username || "User"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email || "No email"}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>Help</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer text-red-600"
+                onClick={handleDropdownLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
