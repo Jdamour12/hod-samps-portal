@@ -1,16 +1,13 @@
 import axios from 'axios';
 
-// Use local proxy endpoints to avoid CORS issues in development
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? '/api'  // Use Next.js API routes as proxy
-  : 'https://ursmartmonitoring.ur.ac.rw/api/v1'; // Direct API in production
+const API_BASE_URL = 'https://ursmartmonitoring.ur.ac.rw/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 1000000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
@@ -56,11 +53,11 @@ api.interceptors.response.use(
             localStorage.removeItem('permissions');
             localStorage.removeItem('roles');
             window.location.href = '/login';
-          }
+            }
         }
-      }
+        }
     }
     
     return Promise.reject(error);
-  }
+    }
 );

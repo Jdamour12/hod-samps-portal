@@ -17,20 +17,53 @@ import {
 import { Input } from "@/components/ui/input";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export function HeaderContent({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = React.useState("HOD");
-  const [selectedAcademicPeriod, setSelectedAcademicPeriod] =
-    React.useState("2024 Semester 1");
-  const [selectedAcademicYear, setSelectedAcademicYear] =
-    React.useState("2024 - 2025");
   const roles = ["Lecturer", "HOD", "Dean", "DTLE"];
+
+  // Academic year and semester dropdown state
+  const { years, isLoading: yearsLoading } =
+    require("@/hooks/academic-year-and-semesters/useAcademicYears").useAcademicYears();
+  const [selectedYear, setSelectedYearState] = useState<string>("");
+  const { semesters, isLoading: semestersLoading } =
+    require("@/hooks/academic-year-and-semesters/useSemesters").useSemesters(selectedYear);
+  const [selectedSemester, setSelectedSemesterState] = useState<string>("");
+
+  useEffect(() => {
+    const storedYear =
+      typeof window !== "undefined"
+        ? localStorage.getItem("selectedAcademicYear")
+        : null;
+    const storedSemester =
+      typeof window !== "undefined"
+        ? localStorage.getItem("selectedSemester")
+        : null;
+    if (storedYear) setSelectedYearState(storedYear);
+    if (storedSemester) setSelectedSemesterState(storedSemester);
+  }, []);
 
   const handleDropdownLogout = () => {
     logout();
     router.push('/login');
+  };
+
+  const setSelectedYear = (year: string) => {
+    setSelectedYearState(year);
+    if (typeof window !== "undefined")
+      localStorage.setItem("selectedAcademicYear", year);
+    setSelectedSemesterState(""); // Reset semester when year changes
+    if (typeof window !== "undefined")
+      localStorage.removeItem("selectedSemester");
+  };
+  const setSelectedSemester = (semester: string) => {
+    setSelectedSemesterState(semester);
+    if (typeof window !== "undefined")
+      localStorage.setItem("selectedSemester", semester);
   };
 
   return (
@@ -44,53 +77,49 @@ export function HeaderContent({ children }: { children: React.ReactNode }) {
         </div>
         {/* Notifications, Selectors, User */}
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 min-w-[150px]"
-              >
-                {selectedAcademicYear}
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onSelect={() => setSelectedAcademicYear("2024 - 2025")}
-              >
-                2024 - 2025
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => setSelectedAcademicYear("2023 - 2024")}
-              >
-                2023 - 2024
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 min-w-[150px]"
-              >
-                {selectedAcademicPeriod}
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onSelect={() => setSelectedAcademicPeriod("2024 Semester 1")}
-              >
-                2024 Semester 1
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => setSelectedAcademicPeriod("2023 Semester 2")}
-              >
-                2023 Semester 2
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Academic Year Dropdown */}
+            <Select
+              value={selectedYear}
+              onValueChange={setSelectedYear}
+              disabled={yearsLoading}
+            >
+              <SelectTrigger className="w-[160px] border-gray-300">
+                <SelectValue
+                  placeholder={yearsLoading ? "Loading..." : "Academic Year"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(Array.isArray(years) ? years : []).map(
+                  (year: { id: string; name: string }) => (
+                    <SelectItem key={year.id} value={year.id}>
+                      {year.name}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+            {/* Semester Dropdown */}
+            <Select
+              value={selectedSemester}
+              onValueChange={setSelectedSemester} 
+              disabled={semestersLoading || !selectedYear}
+            >
+              <SelectTrigger className="w-[160px] border-gray-300">
+                <SelectValue
+                  placeholder={semestersLoading ? "Loading..." : "Semester"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(Array.isArray(semesters) ? semesters : []).map(
+                  (semester: { id: string; name: string }) => (
+                    <SelectItem key={semester.id} value={semester.id}>
+                      Semester {semester.name}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+            
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

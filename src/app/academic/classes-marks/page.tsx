@@ -25,17 +25,16 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
+import { useModuleAssignments } from "@/hooks/modules/useModuleAssignments";
 
-// Dummy data for demonstration
-// Sample chart data for grade distribution
+// Keep existing analytics dummy data
 const gradeDistributionData = [
   { name: "Approved", value: 3, color: "#22c55e" },
   { name: "Pending", value: 2, color: "#eab308" },
   { name: "Not Submitted", value: 1, color: "#6b7280" },
 ];
 
-// Analytics data based on the image
 const submissionStatistics = {
   totalSubmissions: 4,
   approved: 1,
@@ -75,120 +74,154 @@ const deadlinesData = [
   },
 ];
 
-const marksData = [
-  {
-    lecturer: "Dr. Alice Smith",
-    module: "COE3163 - Software Engineering",
-    students: 45,
-    submissionDate: "2024-12-15",
-    deadline: "2024-12-20",
-    status: "Pending",
-  },
-  {
-    lecturer: "Prof. Bob Johnson",
-    module: "COE3264 - Database Systems",
-    students: 38,
-    submissionDate: "2024-12-14",
-    deadline: "2024-12-20",
-    status: "Approved",
-  },
-  {
-    lecturer: "Ms. Carol Davis",
-    module: "COE3166 - Web Development",
-    students: 42,
-    submissionDate: "Not submitted",
-    deadline: "2024-12-18",
-    status: "Overdue",
-  },
-  {
-    lecturer: "Dr. David Brown",
-    module: "COE3261 - Machine Learning",
-    students: 35,
-    submissionDate: "2024-12-16",
-    deadline: "2024-12-20",
-    status: "Rejected",
-  },
-];
+// Helper function to generate consistent status for demonstration
+const getStatusForAssignment = (assignmentId: string) => {
+  const statuses = ["Pending", "Approved", "Overdue", "Rejected"];
+  // Use assignment ID to generate consistent status
+  const hash = assignmentId.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  return statuses[Math.abs(hash) % statuses.length];
+};
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
 
 export default function MarksSubmittedPage() {
   // Main tabs: 'mark-submissions', 'analytics', 'deadlines'
   const [mainActiveTab, setMainActiveTab] = React.useState("mark-submissions");
 
+  // API Hook - fetch more data initially to reduce need for pagination
+  const {
+    data: moduleAssignments,
+    loading,
+    error,
+    totalElements,
+    totalPages,
+    currentPage,
+    setPage,
+    clearError
+  } = useModuleAssignments({ page: 0, size: 50 });
+
   // Module Table State
-  const [modulePage, setModulePage] = React.useState(1);
-  const router = useRouter();
   const [moduleSearch, setModuleSearch] = React.useState("");
-  const modulePageSize = 4;
-  const moduleFilteredData = marksData.filter(
-    (row) =>
-      (row.lecturer &&
-        row.lecturer.toLowerCase().includes(moduleSearch.toLowerCase())) ||
-      (row.module &&
-        row.module.toLowerCase().includes(moduleSearch.toLowerCase()))
-  );
-  const moduleTotalPages = Math.ceil(
-    moduleFilteredData.length / modulePageSize
-  );
-  const modulePaginatedData = moduleFilteredData.slice(
-    (modulePage - 1) * modulePageSize,
-    modulePage * modulePageSize
+  const [statusFilter, setStatusFilter] = React.useState("All Status");
+  const [yearFilter, setYearFilter] = React.useState("All Years");
+  const [localPage, setLocalPage] = React.useState(1);
+  const router = useRouter();
+
+  // Transform API data to match table format - memoized to prevent recalculation
+  const transformedData = React.useMemo(() => {
+    return moduleAssignments.map(assignment => ({
+      id: assignment.id,
+      className: `${assignment.groupName} (${assignment.groupCode})`,
+      lecturer: assignment.instructorName,
+      lecturerEmail: assignment.instructorEmail,
+      students: assignment.currentEnrollment,
+      maxStudents: assignment.maxStudents,
+      module: `${assignment.moduleCode} - ${assignment.moduleName}`,
+      moduleCode: assignment.moduleCode,
+      moduleName: assignment.moduleName,
+      submissionDate: Math.random() > 0.3 ? formatDate(assignment.updatedAt) : "Not submitted",
+      deadline: formatDate(assignment.endDate),
+      status: getStatusForAssignment(assignment.id), // Consistent status based on ID
+      academicYear: assignment.academicYearName,
+      semester: assignment.semesterName,
+      departmentName: assignment.departmentName,
+      schoolName: assignment.schoolName,
+      collegeName: assignment.collegeName,
+    }));
+  }, [moduleAssignments]);
+
+  // Filter data based on search and filters - memoized
+  const filteredData = React.useMemo(() => {
+    return transformedData.filter(row => {
+      const matchesSearch = 
+        row.className.toLowerCase().includes(moduleSearch.toLowerCase()) ||
+        row.lecturer.toLowerCase().includes(moduleSearch.toLowerCase()) ||
+        row.module.toLowerCase().includes(moduleSearch.toLowerCase());
+      
+      const matchesStatus = statusFilter === "All Status" || row.status === statusFilter;
+      
+      // For year filter, you might want to extract year from academicYear or className
+      const matchesYear = yearFilter === "All Years"; // Implement year filtering logic as needed
+      
+      return matchesSearch && matchesStatus && matchesYear;
+    });
+  }, [transformedData, moduleSearch, statusFilter, yearFilter]);
+
+  // Local pagination for filtered data
+  const pageSize = 10;
+  const totalFilteredPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (localPage - 1) * pageSize,
+    localPage * pageSize
   );
 
-  // Dummy class data for demonstration
-  const classData = [
-    {
-      className: "CS101 - Computer Science Year 1",
-      lecturer: "Dr. Alice Smith",
-      students: 45,
-      submissionDate: "2024-12-15",
-      deadline: "2024-12-20",
-      status: "Pending",
-    },
-    {
-      className: "CS201 - Computer Science Year 2",
-      lecturer: "Prof. Bob Johnson",
-      students: 38,
-      submissionDate: "2024-12-14",
-      deadline: "2024-12-20",
-      status: "Approved",
-    },
-    {
-      className: "IT101 - IT Year 1",
-      lecturer: "Ms. Carol Davis",
-      students: 42,
-      submissionDate: "Not submitted",
-      deadline: "2024-12-18",
-      status: "Overdue",
-    },
-    {
-      className: "ML301 - Machine Learning",
-      lecturer: "Dr. David Brown",
-      students: 35,
-      submissionDate: "2024-12-16",
-      deadline: "2024-12-20",
-      status: "Rejected",
-    },
-  ];
-  // Class Table State
-  const [classPage, setClassPage] = React.useState(1);
-  const [classSearch, setClassSearch] = React.useState("");
-  const classPageSize = 4;
-  const classFilteredData = classData.filter(
-    (row) =>
-      (row.className &&
-        row.className.toLowerCase().includes(classSearch.toLowerCase())) ||
-      (row.lecturer &&
-        row.lecturer.toLowerCase().includes(classSearch.toLowerCase()))
-  );
-  const classTotalPages = Math.ceil(classFilteredData.length / classPageSize);
-  const classPaginatedData = classFilteredData.slice(
-    (classPage - 1) * classPageSize,
-    classPage * classPageSize
-  );
+  // Reset local page when filters change
+  React.useEffect(() => {
+    setLocalPage(1);
+  }, [moduleSearch, statusFilter, yearFilter]);
 
   // Deadlines state
   const [selectedModule, setSelectedModule] = React.useState("");
   const [selectedDeadline, setSelectedDeadline] = React.useState("");
+
+  const renderStatusBadge = (status: string) => {
+    const statusConfig = {
+      "Pending": {
+        className: "bg-yellow-100 text-yellow-700",
+        icon: (
+          <svg className="h-4 w-4 inline" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l2 2" />
+          </svg>
+        )
+      },
+      "Approved": {
+        className: "bg-green-100 text-green-700",
+        icon: (
+          <svg className="h-4 w-4 inline" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )
+      },
+      "Overdue": {
+        className: "bg-red-100 text-red-700",
+        icon: (
+          <svg className="h-4 w-4 inline" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l2 2" />
+          </svg>
+        )
+      },
+      "Rejected": {
+        className: "bg-red-100 text-red-700",
+        icon: (
+          <svg className="h-4 w-4 inline" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        )
+      }
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig];
+    
+    return (
+      <span className={`${config.className} px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1`}>
+        {config.icon}
+        {status}
+      </span>
+    );
+  };
 
   return (
     <div className="p-2">
@@ -237,6 +270,21 @@ export default function MarksSubmittedPage() {
         </button>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="flex justify-between items-center">
+            <span>{error}</span>
+            <button 
+              onClick={clearError}
+              className="text-red-700 hover:text-red-900"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mark Submissions Tab */}
       {mainActiveTab === "mark-submissions" && (
         <Card className="p-6 border border-gray-200">
@@ -247,241 +295,208 @@ export default function MarksSubmittedPage() {
             Review and manage marks submitted by department lecturers
           </p>
 
-          <>
-            <div className="flex gap-2 mb-4 items-center">
-              <select className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white">
-                <option>All Years</option>
-                <option>Year 1</option>
-                <option>Year 2</option>
-                <option>Year 3</option>
-              </select>
-              <select className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white">
-                <option>All Status</option>
-                <option>Pending</option>
-                <option>Approved</option>
-                <option>Overdue</option>
-                <option>Rejected</option>
-              </select>
-              <div className="relative w-full max-w-xs">
-                <input
-                  type="search"
-                  value={classSearch}
-                  onChange={(e) => {
-                    setClassSearch(e.target.value);
-                    setClassPage(1);
-                  }}
-                  placeholder="Search class, lecturer..."
-                  className="border rounded-md px-10 py-2 text-sm w-full bg-white focus:border-[#0891b2] focus:ring-[#0891b2]"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-              </div>
+          <div className="flex gap-2 mb-4 items-center">
+            <select 
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
+            >
+              <option>All Years</option>
+              <option>Year 1</option>
+              <option>Year 2</option>
+              <option>Year 3</option>
+            </select>
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
+            >
+              <option>All Status</option>
+              <option>Pending</option>
+              <option>Approved</option>
+              <option>Overdue</option>
+              <option>Rejected</option>
+            </select>
+            <div className="relative w-full max-w-xs">
+              <input
+                type="search"
+                value={moduleSearch}
+                onChange={(e) => setModuleSearch(e.target.value)}
+                placeholder="Search class, lecturer, module..."
+                className="border rounded-md px-10 py-2 text-sm w-full bg-white focus:border-[#0891b2] focus:ring-[#0891b2]"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
             </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="text-gray-700 font-semibold">
-                      Class
-                    </TableHead>
-                    <TableHead className="text-gray-700 font-semibold">
-                      Lecturer
-                    </TableHead>
-                    <TableHead className="text-gray-700 font-semibold">
-                      Students
-                    </TableHead>
-                    <TableHead className="text-gray-700 font-semibold">
-                      Submission Date
-                    </TableHead>
-                    <TableHead className="text-gray-700 font-semibold">
-                      Deadline
-                    </TableHead>
-                    <TableHead className="text-gray-700 font-semibold">
-                      Status
-                    </TableHead>
-                    <TableHead className="text-right text-gray-700 font-semibold">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {classPaginatedData.map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="text-gray-700 text-sm">
-                        {row.className}
-                      </TableCell>
-                      <TableCell className="text-gray-700 text-sm">
-                        {row.lecturer}
-                      </TableCell>
-                      <TableCell className="text-gray-700 text-sm">
-                        {row.students}
-                      </TableCell>
-                      <TableCell className="text-gray-700 text-sm">
-                        {row.submissionDate}
-                      </TableCell>
-                      <TableCell className="text-gray-700 text-sm">
-                        {row.deadline}
-                      </TableCell>
-                      <TableCell>
-                        {row.status === "Pending" && (
-                          <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                            <svg
-                              className="h-4 w-4 inline"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 8v4l2 2"
-                              />
-                            </svg>
-                            Pending
-                          </span>
-                        )}
-                        {row.status === "Approved" && (
-                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                            <svg
-                              className="h-4 w-4 inline"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                            Approved
-                          </span>
-                        )}
-                        {row.status === "Overdue" && (
-                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                            <svg
-                              className="h-4 w-4 inline"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 8v4l2 2"
-                              />
-                            </svg>
-                            Overdue
-                          </span>
-                        )}
-                        {row.status === "Rejected" && (
-                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                            <svg
-                              className="h-4 w-4 inline"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                            Rejected
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right flex gap-2 justify-end">
-                        <button
-                          className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium"
-                          onClick={() => {
-                            // Use router to navigate to the class details page
-                            router.push(
-                              `/academic/classes-marks/class/${encodeURIComponent(
-                                row.className
-                              )}/2025`
-                            );
-                          }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>{" "}
-                          View
-                        </button>
-                        {row.status === "Overdue" && (
-                          <button className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 8v6m0 0l-3-3m3 3l3-3"
-                              />
-                            </svg>{" "}
-                            Remind
-                          </button>
-                        )}
-                      </TableCell>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-[#026892]" />
+              <span className="ml-2 text-gray-600">Loading module assignments...</span>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="text-gray-700 font-semibold">
+                        Class
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Module
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Lecturer
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Students
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Submission Date
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Deadline
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-right text-gray-700 font-semibold">
+                        Actions
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {/* Pagination Controls */}
-            <div className="flex justify-end items-center mt-4 gap-2">
-              <button
-                className="px-3 py-1 rounded-md border text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
-                onClick={() => setClassPage((p) => Math.max(1, p - 1))}
-                disabled={classPage === 1}
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-600">
-                Page {classPage} of {classTotalPages}
-              </span>
-              <button
-                className="px-3 py-1 rounded-md border text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
-                onClick={() =>
-                  setClassPage((p) => Math.min(classTotalPages, p + 1))
-                }
-                disabled={classPage === classTotalPages}
-              >
-                Next
-              </button>
-            </div>
-          </>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                          {loading ? 'Loading...' : (moduleSearch || statusFilter !== "All Status" ? 'No matching results found' : 'No module assignments found')}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedData.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell className="text-gray-700 text-sm">
+                            <div>
+                              <div className="font-medium">{row.className}</div>
+                              <div className="text-xs text-gray-500">
+                                {row.academicYear} • {row.semester}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-700 text-sm">
+                            <div>
+                              <div className="font-medium">{row.moduleCode}</div>
+                              <div className="text-xs text-gray-500">{row.moduleName}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-700 text-sm">
+                            <div>
+                              <div>{row.lecturer}</div>
+                              <div className="text-xs text-gray-500">{row.departmentName}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-700 text-sm">
+                            {row.students}/{row.maxStudents}
+                          </TableCell>
+                          <TableCell className="text-gray-700 text-sm">
+                            {row.submissionDate}
+                          </TableCell>
+                          <TableCell className="text-gray-700 text-sm">
+                            {row.deadline}
+                          </TableCell>
+                          <TableCell>
+                            {renderStatusBadge(row.status)}
+                          </TableCell>
+                          <TableCell className="text-right flex gap-2 justify-end">
+                            <button
+                              className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium"
+                              onClick={() => {
+                                router.push(
+                                  `/academic/classes-marks/class/${encodeURIComponent(
+                                    row.className
+                                  )}/2025`
+                                );
+                              }}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>{" "}
+                              View
+                            </button>
+                            {row.status === "Overdue" && (
+                              <button className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17 8v6m0 0l-3-3m3 3l3-3"
+                                  />
+                                </svg>{" "}
+                                Remind
+                              </button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              {/* Pagination Controls */}
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-600">
+                  Showing {paginatedData.length} of {filteredData.length} filtered results ({totalElements} total)
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="px-3 py-1 rounded-md border text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
+                    onClick={() => setLocalPage(p => Math.max(1, p - 1))}
+                    disabled={localPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600 px-3 py-1">
+                    Page {localPage} of {totalFilteredPages || 1}
+                  </span>
+                  <button
+                    className="px-3 py-1 rounded-md border text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
+                    onClick={() => setLocalPage(p => Math.min(totalFilteredPages, p + 1))}
+                    disabled={localPage >= totalFilteredPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </Card>
       )}
 
@@ -578,15 +593,11 @@ export default function MarksSubmittedPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Highest Module Avg:</span>
-                <span className="font-semibold text-green-600">
-                  {departmentStats.highestModuleAvg}%
-                </span>
+                <span className="font-semibold text-green-600">{departmentStats.highestModuleAvg}%</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Lowest Module Avg:</span>
-                <span className="font-semibold text-red-600">
-                  {departmentStats.lowestModuleAvg}%
-                </span>
+                <span className="font-semibold text-red-600">{departmentStats.lowestModuleAvg}%</span>
               </div>
             </div>
           </Card>
@@ -619,12 +630,11 @@ export default function MarksSubmittedPage() {
                   className="w-full border rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
                 >
                   <option value="">Select Module</option>
-                  <option value="COE3163">
-                    COE3163 - Software Engineering
-                  </option>
-                  <option value="COE3166">COE3166 - Web Development</option>
-                  <option value="COE3264">COE3264 - Database Systems</option>
-                  <option value="COE3261">COE3261 - Machine Learning</option>
+                  {moduleAssignments.map((assignment) => (
+                    <option key={assignment.id} value={assignment.moduleId}>
+                      {assignment.moduleCode} - {assignment.moduleName}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex-1">
