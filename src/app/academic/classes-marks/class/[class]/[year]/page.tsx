@@ -182,6 +182,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ExcelMarksPage from "@/components/marks/over-all";
+import RepeatersComponent from "@/components/marks/repeaters";
 
 const tabs = ["Summary", "Overall Marks", "Repeaters Summary", "Repeaters & Retakers"];
 
@@ -455,260 +457,261 @@ export default function ClassMarksPage() {
         </div>
       )}
       {activeTab === 1 && (
-        <Card>
-          <CardContent>
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-[11px] border-collapse">
-                <thead className="sticky top-0 z-10 w-full">
-                  <tr>
-                    <th rowSpan={2} className="border p-2 bg-[#cfeac4] w-8">
-                      SN
-                    </th>
-                    <th
-                      rowSpan={2}
-                      className="border p-2 bg-[#cfeac4] w-24 text-left"
-                    >
-                      Ref.No.
-                    </th>
-                    <th rowSpan={3} className="border p-2 bg-[#cfeac4] w-8">
-                      SEX
-                    </th>
-                    <th
-                      colSpan={sem1Codes.length}
-                      className="border p-2 bg-[#c6f3f1] text-center font-semibold"
-                    >
-                      SEMESTER I
-                    </th>
-                    <th
-                      colSpan={sem2Codes.length}
-                      className="border p-2 bg-[#c6f3f1] text-center font-semibold"
-                    >
-                      SEMESTER II
-                    </th>
-                    <th
-                      colSpan={6}
-                      className="border p-2 bg-[#bfb0d8] text-center font-semibold"
-                    >
-                      OBSERVATIONS
-                    </th>
-                  </tr>
-                  <tr className="text-[10px]">
-                    {sem1Codes.map((c) => (
-                      <th
-                        key={c}
-                        className="border p-1 bg-[#e0f2f1] w-12 text-center"
-                      >
-                        {c}
-                      </th>
-                    ))}
-                    {sem2Codes.map((c) => (
-                      <th
-                        key={c}
-                        className="border p-1 bg-[#e0f2f1] w-12 text-center"
-                      >
-                        {c}
-                      </th>
-                    ))}
-                    <th className="border p-1 bg-[#d8caec] w-16">
-                      Total credits (ΣCi)
-                    </th>
-                    <th className="border p-1 bg-[#d8caec] w-16">
-                      Annual Average
-                    </th>
-                    <th className="border p-1 bg-[#d8caec] w-20">
-                      Previous Failed module
-                    </th>
-                    <th className="border p-1 bg-[#d8caec] w-20">
-                      Current Failed module
-                    </th>
-                    <th className="border p-1 bg-[#d8caec] w-20">Remark</th>
-                    <th className="border p-1 bg-[#d8caec] w-12">PRH</th>
-                  </tr>
-                  <tr className="text-[10px]">
-                    <th className="border p-1 bg-[#fff8f0]" colSpan={3}>
-                      Max Mark
-                    </th>
-                    {sem1Codes.map((_, i) => (
-                      <th key={`max1-${i}`} className="border p-1 bg-[#f0f8ff]">
-                        100
-                      </th>
-                    ))}
-                    {sem2Codes.map((_, i) => (
-                      <th key={`max2-${i}`} className="border p-1 bg-[#f0f8ff]">
-                        100
-                      </th>
-                    ))}
-                    <th className="border p-1 bg-[#f0f8ff]" colSpan={6}></th>
-                  </tr>
-                  <tr className="text-[10px]">
-                    <th className="border p-1 bg-[#fff8f0]" colSpan={3}>
-                      Pass Mark
-                    </th>
-                    {Array.from({
-                      length: sem1Codes.length + sem2Codes.length,
-                    }).map((_, i) => (
-                      <th key={`pass-${i}`} className="border p-1 bg-[#fff8f0]">
-                        50
-                      </th>
-                    ))}
-                    <th className="border p-1 bg-[#fff8f0]" colSpan={6}></th>
-                  </tr>
-                  <tr className="text-[10px]">
-                    <th className="border p-1 bg-[#f8fff8]" colSpan={3}>
-                      Credit (Ci)
-                    </th>
-                    {sem1Credits.map((c, i) => (
-                      <th
-                        key={`cred1-${i}`}
-                        className="border p-1 bg-[#f8fff8]"
-                      >
-                        {c}
-                      </th>
-                    ))}
-                    {sem2Credits.map((c, i) => (
-                      <th
-                        key={`cred2-${i}`}
-                        className="border p-1 bg-[#f8fff8]"
-                      >
-                        {c}
-                      </th>
-                    ))}
-                    <th className="border p-1 bg-[#f8fff8]">130</th>
-                    <th className="border p-1 bg-[#f8fff8]" colSpan={5}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedStudents.map((s, idx) => {
-                    // Find the correct index in studentData for the current student
-                    const dataIdx = students.findIndex(
-                      (stu) => stu.ref === s.ref
-                    );
-                    return (
-                      <React.Fragment key={s.sn}>
-                        {/* Numeric scores row */}
-                        <tr className="even:bg-muted/30">
-                          <td className="border p-1 text-center">{s.sn}</td>
-                          <td className="border p-1">{s.ref}</td>
-                          <td className="border p-1 text-center">{s.sex}</td>
-                          {/* Semester 1 scores */}
-                          {studentData[dataIdx]?.scores1.map((score, i) => (
-                            <td
-                              key={`s1-${i}`}
-                              className={`border p-1 text-center ${
-                                score < 50 && score > 0
-                                  ? "bg-[#ffd9de] text-red-600 font-semibold"
-                                  : ""
-                              }`}
-                            >
-                              {score > 0 ? score.toFixed(2) : ""}
-                            </td>
-                          ))}
-                          {/* Semester 2 scores */}
-                          {s.status === "ABSCONDED"
-                            ? Array.from({ length: sem2Codes.length }).map(
-                                (_, i) => (
-                                  <td
-                                    key={`s2-abs-${i}`}
-                                    className="border p-1 text-center bg-[#ffe4ea]"
-                                  ></td>
-                                )
-                              )
-                            : studentData[dataIdx]?.scores2.map((score, i) => (
-                                <td
-                                  key={`s2-${i}`}
-                                  className={`border p-1 text-center ${
-                                    score < 50
-                                      ? "bg-[#ffd9de] text-red-600 font-semibold"
-                                      : ""
-                                  }`}
-                                >
-                                  {score.toFixed(2)}
-                                </td>
-                              ))}
-                          <td className="border p-1 text-center">130</td>
-                          <td className="border p-1 text-center">
-                            {studentData[dataIdx]?.avg > 0
-                              ? studentData[dataIdx]?.avg.toFixed(2)
-                              : ""}
-                          </td>
-                          <td className="border p-1"></td>
-                          <td className="border p-1"></td>
-                          <td className="border p-1 font-semibold">
-                            {s.status || "PROGRESS"}
-                          </td>
-                          <td className="border p-1"></td>
-                        </tr>
-                        {/* Letter grades row */}
-                        <tr className="text-[10px]">
-                          <td
-                            className="border p-1 text-muted-foreground"
-                            colSpan={3}
-                          >
-                            Letter Grade
-                          </td>
-                          {/* Semester 1 letter grades */}
-                          {studentData[dataIdx]?.scores1.map((score, i) => (
-                            <td
-                              key={`lg1-${i}`}
-                              className="border p-1 text-center text-muted-foreground"
-                            >
-                              {score > 0 ? getLetterGrade(score) : ""}
-                            </td>
-                          ))}
-                          {/* Semester 2 letter grades */}
-                          {s.status === "ABSCONDED"
-                            ? Array.from({ length: sem2Codes.length }).map(
-                                (_, i) => (
-                                  <td
-                                    key={`lg2-abs-${i}`}
-                                    className="border p-1 text-center text-muted-foreground"
-                                  >
-                                    F
-                                  </td>
-                                )
-                              )
-                            : studentData[dataIdx]?.scores2.map((score, i) => (
-                                <td
-                                  key={`lg2-${i}`}
-                                  className="border p-1 text-center text-muted-foreground"
-                                >
-                                  {getLetterGrade(score)}
-                                </td>
-                              ))}
-                          <td className="border p-1" colSpan={6}></td>
-                        </tr>
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {/* Pagination controls */}
-            <div className="flex justify-end items-center gap-2 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <span className="text-xs">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-              >
-                Next
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <ExcelMarksPage />
+        // <Card>
+        //   <CardContent>
+        //     <div className="overflow-x-auto w-full">
+        //       <table className="w-full text-[11px] border-collapse">
+        //         <thead className="sticky top-0 z-10 w-full">
+        //           <tr>
+        //             <th rowSpan={2} className="border p-2 bg-[#cfeac4] w-8">
+        //               SN
+        //             </th>
+        //             <th
+        //               rowSpan={2}
+        //               className="border p-2 bg-[#cfeac4] w-24 text-left"
+        //             >
+        //               Ref.No.
+        //             </th>
+        //             <th rowSpan={3} className="border p-2 bg-[#cfeac4] w-8">
+        //               SEX
+        //             </th>
+        //             <th
+        //               colSpan={sem1Codes.length}
+        //               className="border p-2 bg-[#c6f3f1] text-center font-semibold"
+        //             >
+        //               SEMESTER I
+        //             </th>
+        //             <th
+        //               colSpan={sem2Codes.length}
+        //               className="border p-2 bg-[#c6f3f1] text-center font-semibold"
+        //             >
+        //               SEMESTER II
+        //             </th>
+        //             <th
+        //               colSpan={6}
+        //               className="border p-2 bg-[#bfb0d8] text-center font-semibold"
+        //             >
+        //               OBSERVATIONS
+        //             </th>
+        //           </tr>
+        //           <tr className="text-[10px]">
+        //             {sem1Codes.map((c) => (
+        //               <th
+        //                 key={c}
+        //                 className="border p-1 bg-[#e0f2f1] w-12 text-center"
+        //               >
+        //                 {c}
+        //               </th>
+        //             ))}
+        //             {sem2Codes.map((c) => (
+        //               <th
+        //                 key={c}
+        //                 className="border p-1 bg-[#e0f2f1] w-12 text-center"
+        //               >
+        //                 {c}
+        //               </th>
+        //             ))}
+        //             <th className="border p-1 bg-[#d8caec] w-16">
+        //               Total credits (ΣCi)
+        //             </th>
+        //             <th className="border p-1 bg-[#d8caec] w-16">
+        //               Annual Average
+        //             </th>
+        //             <th className="border p-1 bg-[#d8caec] w-20">
+        //               Previous Failed module
+        //             </th>
+        //             <th className="border p-1 bg-[#d8caec] w-20">
+        //               Current Failed module
+        //             </th>
+        //             <th className="border p-1 bg-[#d8caec] w-20">Remark</th>
+        //             <th className="border p-1 bg-[#d8caec] w-12">PRH</th>
+        //           </tr>
+        //           <tr className="text-[10px]">
+        //             <th className="border p-1 bg-[#fff8f0]" colSpan={3}>
+        //               Max Mark
+        //             </th>
+        //             {sem1Codes.map((_, i) => (
+        //               <th key={`max1-${i}`} className="border p-1 bg-[#f0f8ff]">
+        //                 100
+        //               </th>
+        //             ))}
+        //             {sem2Codes.map((_, i) => (
+        //               <th key={`max2-${i}`} className="border p-1 bg-[#f0f8ff]">
+        //                 100
+        //               </th>
+        //             ))}
+        //             <th className="border p-1 bg-[#f0f8ff]" colSpan={6}></th>
+        //           </tr>
+        //           <tr className="text-[10px]">
+        //             <th className="border p-1 bg-[#fff8f0]" colSpan={3}>
+        //               Pass Mark
+        //             </th>
+        //             {Array.from({
+        //               length: sem1Codes.length + sem2Codes.length,
+        //             }).map((_, i) => (
+        //               <th key={`pass-${i}`} className="border p-1 bg-[#fff8f0]">
+        //                 50
+        //               </th>
+        //             ))}
+        //             <th className="border p-1 bg-[#fff8f0]" colSpan={6}></th>
+        //           </tr>
+        //           <tr className="text-[10px]">
+        //             <th className="border p-1 bg-[#f8fff8]" colSpan={3}>
+        //               Credit (Ci)
+        //             </th>
+        //             {sem1Credits.map((c, i) => (
+        //               <th
+        //                 key={`cred1-${i}`}
+        //                 className="border p-1 bg-[#f8fff8]"
+        //               >
+        //                 {c}
+        //               </th>
+        //             ))}
+        //             {sem2Credits.map((c, i) => (
+        //               <th
+        //                 key={`cred2-${i}`}
+        //                 className="border p-1 bg-[#f8fff8]"
+        //               >
+        //                 {c}
+        //               </th>
+        //             ))}
+        //             <th className="border p-1 bg-[#f8fff8]">130</th>
+        //             <th className="border p-1 bg-[#f8fff8]" colSpan={5}></th>
+        //           </tr>
+        //         </thead>
+        //         <tbody>
+        //           {paginatedStudents.map((s, idx) => {
+        //             // Find the correct index in studentData for the current student
+        //             const dataIdx = students.findIndex(
+        //               (stu) => stu.ref === s.ref
+        //             );
+        //             return (
+        //               <React.Fragment key={s.sn}>
+        //                 {/* Numeric scores row */}
+        //                 <tr className="even:bg-muted/30">
+        //                   <td className="border p-1 text-center">{s.sn}</td>
+        //                   <td className="border p-1">{s.ref}</td>
+        //                   <td className="border p-1 text-center">{s.sex}</td>
+        //                   {/* Semester 1 scores */}
+        //                   {studentData[dataIdx]?.scores1.map((score, i) => (
+        //                     <td
+        //                       key={`s1-${i}`}
+        //                       className={`border p-1 text-center ${
+        //                         score < 50 && score > 0
+        //                           ? "bg-[#ffd9de] text-red-600 font-semibold"
+        //                           : ""
+        //                       }`}
+        //                     >
+        //                       {score > 0 ? score.toFixed(2) : ""}
+        //                     </td>
+        //                   ))}
+        //                   {/* Semester 2 scores */}
+        //                   {s.status === "ABSCONDED"
+        //                     ? Array.from({ length: sem2Codes.length }).map(
+        //                         (_, i) => (
+        //                           <td
+        //                             key={`s2-abs-${i}`}
+        //                             className="border p-1 text-center bg-[#ffe4ea]"
+        //                           ></td>
+        //                         )
+        //                       )
+        //                     : studentData[dataIdx]?.scores2.map((score, i) => (
+        //                         <td
+        //                           key={`s2-${i}`}
+        //                           className={`border p-1 text-center ${
+        //                             score < 50
+        //                               ? "bg-[#ffd9de] text-red-600 font-semibold"
+        //                               : ""
+        //                           }`}
+        //                         >
+        //                           {score.toFixed(2)}
+        //                         </td>
+        //                       ))}
+        //                   <td className="border p-1 text-center">130</td>
+        //                   <td className="border p-1 text-center">
+        //                     {studentData[dataIdx]?.avg > 0
+        //                       ? studentData[dataIdx]?.avg.toFixed(2)
+        //                       : ""}
+        //                   </td>
+        //                   <td className="border p-1"></td>
+        //                   <td className="border p-1"></td>
+        //                   <td className="border p-1 font-semibold">
+        //                     {s.status || "PROGRESS"}
+        //                   </td>
+        //                   <td className="border p-1"></td>
+        //                 </tr>
+        //                 {/* Letter grades row */}
+        //                 <tr className="text-[10px]">
+        //                   <td
+        //                     className="border p-1 text-muted-foreground"
+        //                     colSpan={3}
+        //                   >
+        //                     Letter Grade
+        //                   </td>
+        //                   {/* Semester 1 letter grades */}
+        //                   {studentData[dataIdx]?.scores1.map((score, i) => (
+        //                     <td
+        //                       key={`lg1-${i}`}
+        //                       className="border p-1 text-center text-muted-foreground"
+        //                     >
+        //                       {score > 0 ? getLetterGrade(score) : ""}
+        //                     </td>
+        //                   ))}
+        //                   {/* Semester 2 letter grades */}
+        //                   {s.status === "ABSCONDED"
+        //                     ? Array.from({ length: sem2Codes.length }).map(
+        //                         (_, i) => (
+        //                           <td
+        //                             key={`lg2-abs-${i}`}
+        //                             className="border p-1 text-center text-muted-foreground"
+        //                           >
+        //                             F
+        //                           </td>
+        //                         )
+        //                       )
+        //                     : studentData[dataIdx]?.scores2.map((score, i) => (
+        //                         <td
+        //                           key={`lg2-${i}`}
+        //                           className="border p-1 text-center text-muted-foreground"
+        //                         >
+        //                           {getLetterGrade(score)}
+        //                         </td>
+        //                       ))}
+        //                   <td className="border p-1" colSpan={6}></td>
+        //                 </tr>
+        //               </React.Fragment>
+        //             );
+        //           })}
+        //         </tbody>
+        //       </table>
+        //     </div>
+        //     {/* Pagination controls */}
+        //     <div className="flex justify-end items-center gap-2 mt-4">
+        //       <Button
+        //         variant="outline"
+        //         size="sm"
+        //         disabled={currentPage === 1}
+        //         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        //       >
+        //         Previous
+        //       </Button>
+        //       <span className="text-xs">
+        //         Page {currentPage} of {totalPages}
+        //       </span>
+        //       <Button
+        //         variant="outline"
+        //         size="sm"
+        //         disabled={currentPage === totalPages}
+        //         onClick={() =>
+        //           setCurrentPage((p) => Math.min(totalPages, p + 1))
+        //         }
+        //       >
+        //         Next
+        //       </Button>
+        //     </div>
+        //   </CardContent>
+        // </Card>
       )}
       {activeTab === 2 && (
         <Card>
@@ -750,141 +753,7 @@ export default function ClassMarksPage() {
       )}
       {/* Repeaters and Retakers tab */}
       {activeTab === 3 && (
-        <Card>
-          <CardContent>
-            <div className="mb-4">
-              <p className="text-muted-foreground text-sm mt-4">
-                Detailed results for students repeating courses or retaking failed modules, including original marks.
-              </p>
-            </div>
-            <div>
-              <table className="w-full table-fixed text-[9px] border-collapse">
-                <colgroup>
-                  <col className="w-[28px]" />
-                  <col className="w-[92px]" />
-                  <col className="w-[32px]" />
-                  {rrSem1Codes.map((_, i) => (
-                    <col key={`cg1-${i}`} className="w-[60px]" />
-                  ))}
-                  {rrSem2Codes.map((_, i) => (
-                    <col key={`cg2-${i}`} className="w-[60px]" />
-                  ))}
-                  <col className="w-[56px]" />
-                  <col className="w-[70px]" />
-                  <col className="w-[70px]" />
-                  <col className="w-[70px]" />
-                  <col className="w-[86px]" />
-                </colgroup>
-                <thead className="sticky top-0 z-10">
-                  <tr>
-                    <th rowSpan={2} className="border p-2 bg-[#cfeac4] w-8">SN</th>
-                    <th rowSpan={2} className="border p-2 bg-[#cfeac4] text-left">Ref.No.</th>
-                    <th rowSpan={2} className="border p-2 bg-[#cfeac4] w-8">SEX</th>
-                    <th colSpan={rrSem1Codes.length} className="border p-2 bg-[#c6f3f1] text-center font-semibold">SEMESTER I</th>
-                    <th colSpan={rrSem2Codes.length} className="border p-2 bg-[#c6f3f1] text-center font-semibold">SEMESTER II</th>
-                    <th colSpan={5} className="border p-2 bg-[#bfb0d8] text-center font-semibold">OBSERVATIONS</th>
-                  </tr>
-                  <tr className="text-[9px]">
-                    {rrSem1Codes.map((c) => (
-                      <th key={c} className="border p-1 bg-[#e0f2f1] text-center truncate">{c}</th>
-                    ))}
-                    {rrSem2Codes.map((c) => (
-                      <th key={c} className="border p-1 bg-[#e0f2f1] text-center truncate">{c}</th>
-                    ))}
-                    <th className="border p-1 bg-[#d8caec]">Total credits (ΣCi)</th>
-                    <th className="border p-1 bg-[#d8caec]">Annual Average (%)</th>
-                    <th className="border p-1 bg-[#d8caec]">Previous Failed modules</th>
-                    <th className="border p-1 bg-[#d8caec]">Current Failed modules</th>
-                    <th className="border p-1 bg-[#d8caec]">Remark</th>
-                  </tr>
-                  <tr className="text-[9px]">
-                    <th className="border p-1 bg-[#f0f8ff]" colSpan={3}>Max. Mark</th>
-                    {Array.from({ length: rrSem1Codes.length + rrSem2Codes.length }).map((_, i) => (
-                      <th key={`rr-max-${i}`} className="border p-1 bg-[#f0f8ff]">100</th>
-                    ))}
-                    <th className="border p-1 bg-[#f0f8ff]" colSpan={5}></th>
-                  </tr>
-                  <tr className="text-[9px]">
-                    <th className="border p-1 bg-[#fff8f0]" colSpan={3}>Pass Mark</th>
-                    {Array.from({ length: rrSem1Codes.length + rrSem2Codes.length }).map((_, i) => (
-                      <th key={`rr-pass-${i}`} className="border p-1 bg-[#fff8f0]">50</th>
-                    ))}
-                    <th className="border p-1 bg-[#fff8f0]" colSpan={5}></th>
-                  </tr>
-                  <tr className="text-[9px]">
-                    <th className="border p-1 bg-[#f8fff8]" colSpan={3}>Credit (Ci)</th>
-                    {rrSem1Credits.map((c, i) => (
-                      <th key={`rr-cred1-${i}`} className="border p-1 bg-[#f8fff8]">{c}</th>
-                    ))}
-                    {rrSem2Credits.map((c, i) => (
-                      <th key={`rr-cred2-${i}`} className="border p-1 bg-[#f8fff8]">{c}</th>
-                    ))}
-                    <th className="border p-1 bg-[#f8fff8]">135</th>
-                    <th className="border p-1 bg-[#f8fff8]" colSpan={4}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rrStudents.map((s, idx) => (
-                    <React.Fragment key={s.sn}>
-                      <tr className="even:bg-muted/30">
-                        <td className="border px-0.5 py-0.5 text-center">{s.sn}</td>
-                        <td className="border px-0.5 py-0.5">{s.ref}</td>
-                        <td className="border px-0.5 py-0.5 text-center">{s.sex}</td>
-                        {rrStudentScores[idx]?.sem1.map((score, i) => (
-                          <td key={`rr-s1-${i}`} className={`border px-0.5 py-0.5 text-center ${score < 50 && score > 0 ? "bg-[#ffd9de] text-red-600 font-semibold" : ""}`}>
-                            {score > 0 ? score.toFixed(2) : ""}
-                          </td>
-                        ))}
-                        {rrStudentScores[idx]?.sem2.map((score, i) => (
-                          <td key={`rr-s2-${i}`} className={`border px-0.5 py-0.5 text-center ${score < 50 && score > 0 ? "bg-[#ffd9de] text-red-600 font-semibold" : score === 0 ? "bg-[#ffe4ea]" : ""}`}>
-                            {score > 0 ? score.toFixed(2) : ""}
-                          </td>
-                        ))}
-                        <td className="border px-0.5 py-0.5 text-center">{s.totalCredits}</td>
-                        <td className="border px-0.5 py-0.5 text-center">{s.annualAvg.toFixed(2)}</td>
-                        <td className="border px-0.5 py-0.5 text-center text-[9px]">
-                          <div className="flex flex-col items-center leading-tight">
-                            {s.failedModules.map((m) => (
-                              <span key={`prev-${s.ref}-${m}`}>{m}</span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="border px-0.5 py-0.5 text-center text-[9px]">
-                          <div className="flex flex-col items-center leading-tight">
-                            {s.failedModules.map((m) => (
-                              <span key={`curr-${s.ref}-${m}`}>{m}</span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="border px-0.5 py-0.5 font-semibold text-[9px]">{s.remark}</td>
-                      </tr>
-                      <tr className="text-[9px]">
-                        <td className="border px-1 py-0.5 text-muted-foreground" colSpan={3}>Letter Grade</td>
-                        {rrStudentScores[idx]?.sem1.map((score, i) => (
-                          <td key={`rr-lg1-${i}`} className="border px-1 py-0.5 text-center text-muted-foreground">{score > 0 ? getLetterGrade(score) : ""}</td>
-                        ))}
-                        {rrStudentScores[idx]?.sem2.map((score, i) => (
-                          <td key={`rr-lg2-${i}`} className="border px-1 py-0.5 text-center text-muted-foreground">{score > 0 ? getLetterGrade(score) : score === 0 ? "F" : ""}</td>
-                        ))}
-                        <td className="border p-1" colSpan={5}></td>
-                      </tr>
-                      <tr className="text-[9px]">
-                        <td className="border px-1 py-0.5 text-muted-foreground" colSpan={3}>Original marks</td>
-                        {rrStudentScores[idx]?.sem1Original.map((score, i) => (
-                          <td key={`rr-om1-${i}`} className="border px-1 py-0.5 text-center text-red-600 font-semibold">{score ? score.toFixed(2) : ""}</td>
-                        ))}
-                        {rrStudentScores[idx]?.sem2Original.map((score, i) => (
-                          <td key={`rr-om2-${i}`} className="border px-1 py-0.5 text-center text-red-600 font-semibold">{score ? score.toFixed(2) : ""}</td>
-                        ))}
-                        <td className="border p-1" colSpan={5}></td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <RepeatersComponent />
       )}
     </div>
   );
