@@ -89,19 +89,22 @@ export function ExcelPreviewTable({
           border-radius: 6px;
         }
         .excel-preview-table::-webkit-scrollbar-thumb {
-          background: #3b82f6;
+          background: #026892;
           border-radius: 6px;
           border: 2px solid #e5e7eb;
         }
         .excel-preview-table::-webkit-scrollbar-thumb:hover {
-          background: #2563eb;
+          background: #025f7f;
         }
         .excel-preview-table::-webkit-scrollbar-corner {
           background: #e5e7eb;
         }
+        .excel-preview-table {
+          scroll-behavior: smooth;
+        }
       `}</style>
     <Card className={isExpanded ? "fixed inset-4 z-50 bg-white shadow-2xl" : ""}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gray-50 border-b">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-50 border-b">
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-[#026892]">
             <div className="w-6 h-6 bg-[#026892] rounded flex items-center justify-center">
@@ -143,7 +146,7 @@ export function ExcelPreviewTable({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         {/* Sheet Tabs */}
         {data.length > 1 && (
           <div className="flex gap-1 flex-wrap border-b-2 border-gray-300 pb-0 bg-gray-100 p-2 rounded-t-md">
@@ -181,131 +184,8 @@ export function ExcelPreviewTable({
 
         {/* Table */}
           <div className="border border-gray-300 rounded-md overflow-hidden">
-          <div className={`excel-preview-table ${isExpanded ? "h-[calc(100vh-16rem)]" : "h-96"} overflow-auto`}>
-            <Table className="border-collapse w-full table-auto" style={{ minWidth: '600px', fontSize: '13px' }}>
-              <TableHeader>
-                <TableRow className="bg-gray-50 border-b border-gray-300">
-                  <TableHead className="w-16 text-center bg-gray-100 border-r border-gray-300 font-semibold text-gray-700 p-2 sticky left-0 z-10">
-                    #
-                  </TableHead>
-                  {currentSheet.headers.map((header, index) => {
-                    // Check if we have styled header data from first row
-                    const headerData = currentSheet.rows.length > 0 && currentSheet.rows[0] && currentSheet.rows[0][index] 
-                      ? currentSheet.rows[0][index] 
-                      : null
-                    
-                    const headerValue = headerData && typeof headerData === 'object' && 'value' in headerData
-                      ? headerData.value 
-                      : header
-                    const headerStyling = headerData && typeof headerData === 'object' && 'styling' in headerData
-                      ? headerData.styling 
-                      : null
-                    
-                    // Build header style with default centering
-                    const headerStyle: React.CSSProperties = {
-                      whiteSpace: headerStyling?.wrapText ? 'pre-wrap' : 'nowrap',
-                      wordWrap: 'break-word',
-                      minWidth: '80px',
-                      maxWidth: '150px',
-                      overflow: 'visible',
-                      padding: '4px 8px',
-                      verticalAlign: 'middle',
-                      textAlign: 'center' // Default center alignment for headers
-                    }
-                    
-                    // Default header classes with center alignment
-                    const headerClasses = ["bg-gray-100", "border-r", "border-gray-300", "font-semibold", "text-gray-700", "p-2", "last:border-r-0", "text-center"]
-                    
-                    // Initialize header spans
-                    let headerRowSpan: number | undefined = undefined
-                    let headerColSpan: number | undefined = undefined
-                    
-                    if (headerStyling) {
-                      if (headerStyling.bold) headerClasses.push("font-bold")
-                      if (headerStyling.italic) headerClasses.push("italic")
-                      if (headerStyling.underline) headerClasses.push("underline")
-                      
-                      // Apply original colors from Excel
-                      if (headerStyling.color) {
-                        headerStyle.color = headerStyling.color
-                        
-                        // Remove default text color class when custom color is applied
-                        // const grayIndex = headerClasses.indexOf("text-gray-700")
-                        // if (grayIndex !== -1) headerClasses.splice(grayIndex, 1)
-                      }
-                      if (headerStyling.backgroundColor) {
-                        headerStyle.backgroundColor = headerStyling.backgroundColor
-                        // Remove default background class when custom background is applied
-                        // const bgIndex = headerClasses.indexOf("bg-gray-100")
-                        // if (bgIndex !== -1) headerClasses.splice(bgIndex, 1)
-                      }
-                      
-                      if (headerStyling.fontSize) headerStyle.fontSize = `${headerStyling.fontSize}px`
-                      if (headerStyling.fontFamily) headerStyle.fontFamily = headerStyling.fontFamily
-                      
-                      // Override alignment if specified in Excel, otherwise keep center
-                      if (headerStyling.alignment) {
-                        // Remove default center class
-                        const centerIndex = headerClasses.indexOf("text-center")
-                        if (centerIndex !== -1) headerClasses.splice(centerIndex, 1)
-                        
-                        if (headerStyling.alignment === 'center') {
-                          headerClasses.push("text-center")
-                          headerStyle.textAlign = 'center'
-                        } else if (headerStyling.alignment === 'right') {
-                          headerClasses.push("text-right")
-                          headerStyle.textAlign = 'right'
-                        } else if (headerStyling.alignment === 'left') {
-                          headerClasses.push("text-left")
-                          headerStyle.textAlign = 'left'
-                        }
-                      }
-                      
-                      if (headerStyling.border) {
-                        headerStyle.border = headerStyling.border
-                      }
-                      
-                      // Handle merged header cells
-                      if (headerStyling.merged && headerStyling.mergeRange) {
-                        const [startRow, startCol, endRow, endCol] = headerStyling.mergeRange
-                        const calculatedRowSpan = endRow - startRow + 1
-                        const calculatedColSpan = endCol - startCol + 1
-                        
-                        // Only apply spans if they are greater than 1
-                        if (calculatedRowSpan > 1) headerRowSpan = calculatedRowSpan
-                        if (calculatedColSpan > 1) headerColSpan = calculatedColSpan
-                        
-                        // Center content for merged header cells (rowspan and colspan)
-                        if (headerRowSpan && headerRowSpan > 1 || headerColSpan && headerColSpan > 1) {
-                          // Remove any existing alignment classes
-                          const alignmentClasses = ['text-left', 'text-right', 'text-center']
-                          alignmentClasses.forEach(alignClass => {
-                            const index = headerClasses.indexOf(alignClass)
-                            if (index !== -1) headerClasses.splice(index, 1)
-                          })
-                          
-                          // Add center alignment for merged header cells
-                          headerClasses.push("text-center")
-                          headerStyle.textAlign = 'center'
-                          headerStyle.verticalAlign = 'middle'
-                        }
-                      }
-                    }
-                    
-                    return (
-                      <TableHead 
-                        key={index} 
-                        className={headerClasses.join(" ")}
-                        style={headerStyle}
-                        rowSpan={headerRowSpan}
-                        colSpan={headerColSpan}
-                      >
-                        {headerValue || `Column ${String.fromCharCode(65 + index)}`}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              </TableHeader>
+          <div className={`excel-preview-table ${isExpanded ? "h-[calc(100vh-2rem)]" : "h-96"} overflow-auto scroll-smooth`}>
+            <Table className="border-collapse w-full table-auto" style={{ minWidth: '800px', fontSize: '13px' }}>
               <TableBody>
                 {visibleRows.map((row, rowIndex) => {
                   const actualRowIndex = rowIndex
@@ -318,9 +198,6 @@ export function ExcelPreviewTable({
                       }`}
                       style={{ height: '32px' }}
                     >
-                      <TableCell className="text-center font-mono text-xs text-gray-500 bg-gray-50 border-r border-gray-200 p-2 font-medium sticky left-0 z-10">
-                        {actualRowIndex + 2}
-                      </TableCell>
                       {row.map((cell, cellIndex) => {
                         // Check if this cell should be skipped due to being part of a merged range
                         // (but not the top-left cell of the range)
@@ -492,26 +369,6 @@ export function ExcelPreviewTable({
                 })}
               </TableBody>
             </Table>
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <div className="flex flex-wrap items-center justify-center gap-6 pt-3 border-t text-sm bg-[#f0f9ff] p-3 rounded-b-md">
-          <div className="flex items-center gap-1">
-            <span className="text-gray-600">Sheets:</span>
-            <span className="font-semibold text-[#026892]">{data.length}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-600">Current:</span>
-            <span className="font-semibold text-[#026892]">{currentSheet.sheetName}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-600">Columns:</span>
-            <span className="font-semibold text-[#026892]">{currentSheet.headers.length}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-600">Total Rows:</span>
-            <span className="font-semibold text-[#026892]">{currentSheet.totalRows}</span>
           </div>
         </div>
       </CardContent>

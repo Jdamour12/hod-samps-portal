@@ -1,6 +1,16 @@
 // src/lib/api-grading.ts
 // API utility for managing grading data and Excel file operations
-import * as XLSX from 'xlsx'
+
+// Dynamic import for XLSX to avoid SSR issues
+const getXLSX = async () => {
+  if (typeof window === 'undefined') {
+    // Server-side: return a mock to avoid import issues
+    return null;
+  }
+  // Client-side: dynamically import XLSX
+  const XLSX = await import('xlsx');
+  return XLSX;
+};
 
 /**
  * Apply tint to a hex color
@@ -38,7 +48,7 @@ function applyTintToColor(hexColor: string, tint: number): string {
 }
 
 interface GradingSheetParams {
-  semesterId: string
+  yearId: string
   groupId: string
 }
 
@@ -94,14 +104,17 @@ interface GradingSheetResponse {
  */
 export async function fetchGradingExcelSheet(params: GradingSheetParams): Promise<GradingSheetResponse> {
   const token = localStorage.getItem('accessToken')
+  
   if (!token) {
     throw new Error('Authentication token not found. Please log in again.')
   }
+  
+  // Use the actual backend API endpoint
+  const API_BASE_URL = 'https://ursmartmonitoring.ur.ac.rw/api/v1'
 
-  const endpoint = `https://ursmartmonitoring.ur.ac.rw/api/v1/grading/overall-sheets/generate-semester-regular-sheet/${params.semesterId}/group/${params.groupId}/excel`;
-  // Log full details for debugging
-  console.log('[fetchGradingExcelSheet] Params:', params);
-  console.log('[fetchGradingExcelSheet] Full endpoint:', window.location.origin + endpoint);
+  const endpoint = `${API_BASE_URL}/grading/overall-sheets/generate-year-regular-sheet/${params.yearId}/group/${params.groupId}/excel`
+  
+  console.log('Fetching grading sheet from:', endpoint)
   
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -132,10 +145,10 @@ export async function fetchGradingExcelSheet(params: GradingSheetParams): Promis
   const blob = await response.blob()
   
   // Generate filename based on parameters
-  const shortSemesterId = params.semesterId.slice(0, 8)
+  const shortYearId = params.yearId.slice(0, 8)
   const shortGroupId = params.groupId.slice(0, 8)
   const timestamp = new Date().toISOString().slice(0, 10)
-  const filename = `grading-sheet-${shortSemesterId}-${shortGroupId}-${timestamp}.xlsx`
+  const filename = `grading-sheet-${shortYearId}-${shortGroupId}-${timestamp}.xlsx`
 
   return {
     blob,
@@ -183,21 +196,28 @@ export async function downloadGradingExcelSheet(params: GradingSheetParams): Pro
  * - Performance optimized parsing
  */
 export async function parseExcelForPreview(blob: Blob, filename: string): Promise<ExcelPreviewData> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer)
-        const workbook = XLSX.read(data, { 
-          type: 'array',
-          cellStyles: true,
-          cellFormula: false,
-          cellHTML: false
-        })
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Get XLSX library dynamically
+      const XLSX = await getXLSX();
+      if (!XLSX) {
+        throw new Error('XLSX library not available on server side');
+      }
+
+      const reader = new FileReader()
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer)
+          const workbook = XLSX.read(data, { 
+            type: 'array',
+            cellStyles: true,
+            cellFormula: false,
+            cellHTML: false
+          })
         
-        // Debug: Check if workbook has color information
-        console.log('Workbook info:', {
+          // Debug: Check if workbook has color information
+          console.log('Workbook info:', {
           sheetNames: workbook.SheetNames,
           hasWorkbookProps: !!workbook.Workbook,
           firstSheet: workbook.SheetNames[0]
@@ -628,6 +648,10 @@ export async function parseExcelForPreview(blob: Blob, filename: string): Promis
     }
     
     reader.readAsArrayBuffer(blob)
+    } catch (error) {
+      // Handle XLSX loading errors
+      reject(error instanceof Error ? error : new Error('Failed to load Excel processing library'))
+    }
   })
 }
 
@@ -650,19 +674,19 @@ export async function fetchAndParseGradingSheet(params: GradingSheetParams): Pro
  * @throws Error if parameters are invalid
  */
 export function validateGradingSheetParams(params: GradingSheetParams): void {
-  if (!params.semesterId || typeof params.semesterId !== 'string') {
-    throw new Error('Semester ID is required and must be a string')
+  if (!params.yearId || typeof params.yearId !== 'string') {
+    throw new Error('Academic Year ID is required. Please select a class from the main page to get valid data.')
   }
   
   if (!params.groupId || typeof params.groupId !== 'string') {
-    throw new Error('Group ID is required and must be a string')
+    throw new Error('Group ID is required. Please select a class from the main page to get valid group information.')
   }
   
   // Basic UUID format validation (optional but helpful)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   
-  if (!uuidRegex.test(params.semesterId)) {
-    console.warn('Semester ID does not appear to be a valid UUID format')
+  if (!uuidRegex.test(params.yearId)) {
+    console.warn('Year ID does not appear to be a valid UUID format')
   }
   
   if (!uuidRegex.test(params.groupId)) {

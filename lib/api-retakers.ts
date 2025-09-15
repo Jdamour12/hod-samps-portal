@@ -251,13 +251,14 @@ export function validateRetakersSheetParams(params: RetakersSheetParams): void {
  * @returns Promise with list of retaker students
  */
 export async function fetchRetakersList(params: RetakersSheetParams): Promise<RetakerStudent[]> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   
   if (!token) {
     throw new Error('Authentication token not found. Please log in again.');
   }
 
-  const endpoint = `/api/proxy/retakers/${params.yearId}/group/${params.groupId}`;
+  const API_BASE_URL = 'https://ursmartmonitoring.ur.ac.rw/api/v1';
+  const endpoint = `${API_BASE_URL}/retakers/${params.yearId}/group/${params.groupId}`;
   
   console.log('Fetching retakers list from:', endpoint);
   
@@ -283,13 +284,14 @@ export async function fetchRetakersList(params: RetakersSheetParams): Promise<Re
  * @returns Promise with summary statistics
  */
 export async function fetchRetakersSummary(params: RetakersSheetParams): Promise<RetakersSummary> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   
   if (!token) {
     throw new Error('Authentication token not found. Please log in again.');
   }
 
-  const endpoint = `/api/proxy/retakers/${params.yearId}/group/${params.groupId}/summary`;
+  const API_BASE_URL = 'https://ursmartmonitoring.ur.ac.rw/api/v1';
+  const endpoint = `${API_BASE_URL}/retakers/${params.yearId}/group/${params.groupId}/summary`;
   
   console.log('Fetching retakers summary from:', endpoint);
   
@@ -321,13 +323,14 @@ export async function updateRetakerStatus(
   status: 'Retaking' | 'Repeating', 
   params: RetakersSheetParams
 ): Promise<void> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   
   if (!token) {
     throw new Error('Authentication token not found. Please log in again.');
   }
 
-  const endpoint = `/api/proxy/retakers/${params.yearId}/group/${params.groupId}/student/${studentId}/status`;
+  const API_BASE_URL = 'https://ursmartmonitoring.ur.ac.rw/api/v1';
+  const endpoint = `${API_BASE_URL}/retakers/${params.yearId}/group/${params.groupId}/student/${studentId}/status`;
   
   console.log('Updating retaker status:', { studentId, status });
   
@@ -361,7 +364,8 @@ export function formatFileSize(bytes: number): string {
 }
 
 // Default retaker parameters (from the URL provided)
-export const DEFAULT_RETAKERS_PARAMS: RetakersSheetParams = {
-  yearId: '2dc84bd0-ba87-4f04-92c4-a2aee2ee786d',
-  groupId: 'e29ea9f8-b815-4a1b-8a66-478df24cda7d',
-};
+// Remove DEFAULT_RETAKERS_PARAMS - components should use real data from backend
+// export const DEFAULT_RETAKERS_PARAMS: RetakersSheetParams = {
+//   yearId: '2dc84bd0-ba87-4f04-92c4-a2aee2ee786d',
+//   groupId: 'e29ea9f8-b815-4a1b-8a66-478df24cda7d',
+// };
