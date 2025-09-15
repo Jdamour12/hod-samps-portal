@@ -24,7 +24,7 @@ import {
 import { useModuleAssignments } from "@/hooks/deadlines/useModuleAssignments";
 import {
   ModuleSubmissionDetails,
-  DeadlineSubmission
+  DeadlineSubmission,
 } from "@/lib/deadlines/moduleAssignmentsApi";
 import { useToast } from "@/hooks/use-toast";
 
@@ -137,8 +137,8 @@ export default function MarksSubmissionDeadlinesPage() {
     const date = new Date(dateString);
     // Ensure we get the date in local timezone
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -271,51 +271,65 @@ export default function MarksSubmissionDeadlinesPage() {
     try {
       setSavingDeadlines(true);
       setModalError("");
-      
+
       // Create deadline object with the required format
       const deadlines = {
         catDeadline: new Date(catDeadline + "T23:59:59").toISOString(),
-        examDeadline: new Date(examDeadline + "T23:59:59").toISOString()
+        examDeadline: new Date(examDeadline + "T23:59:59").toISOString(),
       };
-      
-      console.log('Frontend: Preparing deadlines for module:', modalData.moduleId);
-      console.log('Frontend: Deadlines data:', JSON.stringify(deadlines, null, 2));
-      
+
+      console.log(
+        "Frontend: Preparing deadlines for module:",
+        modalData.moduleId
+      );
+      console.log(
+        "Frontend: Deadlines data:",
+        JSON.stringify(deadlines, null, 2)
+      );
+
       const response = await createSubmissions(modalData.moduleId, deadlines);
-      
+
       if (response && response.success) {
         handleCloseModal();
         refetch(); // Refresh the main data
         toast({
           title: "Success",
-          description: response.message || "CAT and EXAM deadlines have been set successfully.",
+          description:
+            response.message ||
+            "CAT and EXAM deadlines have been set successfully.",
           variant: "default",
         });
       } else {
-        const errorMsg = response?.message || "Failed to save deadlines - invalid response";
+        const errorMsg =
+          response?.message || "Failed to save deadlines - invalid response";
         setModalError(errorMsg);
       }
     } catch (err: any) {
       console.error("Frontend: Error saving deadlines:", err);
-      
-      let errorMessage = "Failed to save deadlines";
-      
-      // Try to extract meaningful error message
-      if (err.response?.data) {
-        if (typeof err.response.data === 'string') {
-          errorMessage = err.response.data;
-        } else if (err.response.data.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response.data.error) {
-          errorMessage = err.response.data.error;
-        } else {
-          errorMessage = `HTTP ${err.response.status}: ${err.response.statusText || 'Bad Request'}`;
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
+
+      // If it's a 500 error (likely means deadline already exists)
+      if (err.response?.status === 500) {
+        setModalError(
+          "This module already has deadlines set. To make changes to existing deadlines, please contact your system administrator."
+        );
+        toast({
+          title: "Cannot Set Deadline",
+          description:
+            "This module already has deadlines set. Please contact your system administrator for any changes.",
+          variant: "destructive",
+        });
+      } else {
+        // For other errors, provide a generic message
+        setModalError(
+          "Could not set deadlines at this time. Please try again later."
+        );
+        toast({
+          title: "Error",
+          description:
+            "Could not set deadlines. Please try again or contact support if the problem persists.",
+          variant: "destructive",
+        });
       }
-      
-      setModalError(errorMessage);
     } finally {
       setSavingDeadlines(false);
     }
@@ -345,7 +359,7 @@ export default function MarksSubmissionDeadlinesPage() {
       </div>
 
       {/* Error Display */}
-      {(error || submissionError || submissionDetailsError) && (
+      {/* {(error || submissionError || submissionDetailsError) && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
           <div className="flex justify-between items-center">
             <span>{error || submissionError || submissionDetailsError}</span>
@@ -357,7 +371,7 @@ export default function MarksSubmissionDeadlinesPage() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       <Card className="p-6 border border-gray-200">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
