@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 import { useModuleAssignments } from "@/hooks/deadlines/useModuleAssignments";
 import {
-  SubmissionDeadline,
   ModuleSubmissionDetails,
+  DeadlineSubmission
 } from "@/lib/deadlines/moduleAssignmentsApi";
 import { useToast } from "@/hooks/use-toast";
 
@@ -272,22 +272,16 @@ export default function MarksSubmissionDeadlinesPage() {
       setSavingDeadlines(true);
       setModalError("");
       
-      // Create clean submission objects with proper ISO string format
-      const submissions: SubmissionDeadline[] = [
-        {
-          submissionType: "CAT" as const,
-          deadline: new Date(catDeadline + "T23:59:59.999Z").toISOString(),
-        },
-        {
-          submissionType: "EXAM" as const,
-          deadline: new Date(examDeadline + "T23:59:59.999Z").toISOString(),
-        },
-      ];
+      // Create deadline object with the required format
+      const deadlines = {
+        catDeadline: new Date(catDeadline + "T23:59:59").toISOString(),
+        examDeadline: new Date(examDeadline + "T23:59:59").toISOString()
+      };
       
-      console.log('Frontend: Preparing submissions for module:', modalData.moduleId);
-      console.log('Frontend: Submissions data:', JSON.stringify(submissions, null, 2));
+      console.log('Frontend: Preparing deadlines for module:', modalData.moduleId);
+      console.log('Frontend: Deadlines data:', JSON.stringify(deadlines, null, 2));
       
-      const response = await createSubmissions(modalData.moduleId, submissions);
+      const response = await createSubmissions(modalData.moduleId, deadlines);
       
       if (response && response.success) {
         handleCloseModal();

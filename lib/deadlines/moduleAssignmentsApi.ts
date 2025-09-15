@@ -40,16 +40,22 @@ export interface ModuleAssignmentsParams {
   semester?: string;
 }
 
-export interface SubmissionDeadline {
-  submissionType: 'CAT' | 'EXAM';
-  deadline: string;
+export interface DeadlineSubmission {
+  catDeadline: string;
+  examDeadline: string;
+  instructions: string;
+  catTitle: string;
+  examTitle: string;
+  catPriority: 'NORMAL' | 'HIGH' | 'LOW';
+  examPriority: 'NORMAL' | 'HIGH' | 'LOW';
+  catGracePeriodHours: number;
+  examGracePeriodHours: number;
+  catNotes: string;
+  examNotes: string;
 }
 
-// Fixed: The API expects the submissions to be sent directly, not wrapped in a submissions object
-export interface CreateSubmissionsRequest {
-  submissionType: 'CAT' | 'EXAM';
-  deadline: string;
-}
+// Request interface matches the exact API format
+export interface CreateSubmissionsRequest extends DeadlineSubmission {}
 
 export interface CreateSubmissionsResponse {
   success: boolean;
@@ -248,13 +254,36 @@ export const moduleAssignmentsApi = {
   },
 
   // Fixed: Send submissions as array directly, matching the API's expected format
-  createModuleSubmissions: async (moduleId: string, submissions: SubmissionDeadline[]): Promise<CreateSubmissionsResponse> => {
+  createModuleSubmissions: async (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }): Promise<CreateSubmissionsResponse> => {
     console.log('Creating submissions for module:', moduleId);
-    console.log('Submissions data:', submissions);
+    console.log('Input deadlines:', deadlines);
     
     try {
-      // The API expects submissions array directly, not wrapped in an object
-      const response = await api.post(`/grading/marks-submission/module/${moduleId}/create-submissions`, submissions);
+      // Format dates to match API expectations exactly
+      const formattedDeadlines = {
+        catDeadline: new Date(deadlines.catDeadline).toISOString().slice(0, 19), // Format to YYYY-MM-DDTHH:mm:ss
+        examDeadline: new Date(deadlines.examDeadline).toISOString().slice(0, 19)
+      };
+      
+      console.log('Formatted deadlines:', formattedDeadlines);
+      
+      const requestBody = {
+        ...formattedDeadlines,
+        instructions: "Please ensure all marks are submitted accurately and on time",
+        catTitle: "Continuous Assessment Test - Semester 1",
+        examTitle: "Final Examination - Semester 1",
+        catPriority: "NORMAL",
+        examPriority: "HIGH",
+        catGracePeriodHours: 24,
+        examGracePeriodHours: 48,
+        catNotes: "First CAT for the semester",
+        examNotes: "Final exam covering all topics"
+      };
+      
+      console.log('Full request body:', JSON.stringify(requestBody, null, 2));
+      console.log('API URL:', `/grading/marks-submissions/module/${moduleId}/set-deadline`);
+      
+      const response = await api.post(`/grading/marks-submissions/module/${moduleId}/set-deadline`, requestBody);
       console.log('API response:', response.data);
       return response.data;
     } catch (error: any) {

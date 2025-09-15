@@ -3,7 +3,7 @@ import {
   moduleAssignmentsApi, 
   ModuleAssignment, 
   ModuleAssignmentsParams, 
-  SubmissionDeadline, 
+  DeadlineSubmission,
   CreateSubmissionsResponse,
   ModuleSubmissionDetailsResponse
 } from '@/lib/deadlines/moduleAssignmentsApi';
@@ -19,7 +19,7 @@ interface UseModuleAssignmentsReturn {
   refetch: () => void;
   clearError: () => void;
   updateFilters: (filters: Partial<ModuleAssignmentsParams>) => void;
-  createSubmissions: (moduleId: string, submissions: SubmissionDeadline[]) => Promise<CreateSubmissionsResponse>;
+    createSubmissions: (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }) => Promise<CreateSubmissionsResponse>;
   isCreatingSubmissions: boolean;
   submissionError: string | null;
   getSubmissionDetails: (moduleId: string) => Promise<ModuleSubmissionDetailsResponse>;
@@ -93,15 +93,15 @@ export const useModuleAssignments = (
     setSubmissionDetailsError(null);
   }, []);
 
-  const createSubmissions = useCallback(async (moduleId: string, submissions: SubmissionDeadline[]): Promise<CreateSubmissionsResponse> => {
+  const createSubmissions = useCallback(async (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }): Promise<CreateSubmissionsResponse> => {
     try {
       setIsCreatingSubmissions(true);
       setSubmissionError(null);
       
       console.log('Hook: Creating submissions for module:', moduleId);
-      console.log('Hook: Submissions data:', submissions);
+      console.log('Hook: Deadlines data:', deadlines);
       
-      const response = await moduleAssignmentsApi.createModuleSubmissions(moduleId, submissions);
+      const response = await moduleAssignmentsApi.createModuleSubmissions(moduleId, deadlines);
       
       console.log('Hook: API Response:', response);
       
