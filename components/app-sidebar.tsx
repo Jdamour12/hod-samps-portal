@@ -75,6 +75,7 @@ const hodNavigation = [
     items: [
       //{ title: "Assessment", url: "/academic/assessment" },
       { title: "Timetables", url: "/academic/timetables" },
+      { title: "Deadlines", url: "/academic/deadlines" },
       { title: "Exams", url: "/academic/exams" },
       { title: "Marks Submitted", url: "/academic/marks-submitted" },
       { title: "Classes Marks", url: "/academic/classes-marks" },

@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { moduleAssignmentsApi, ModuleAssignment, ModuleAssignmentsParams } from '@/lib/modules/moduleAssignmentsApi';
+import { 
+  moduleAssignmentsApi, 
+  ModuleAssignment, 
+  ModuleAssignmentsParams,
+  ModuleSubmissionDetails,
+  ModuleSubmissionDetailsResponse,
+  ModuleSubmissionDetailsListResponse
+} from '@/lib/modules/moduleAssignmentsApi';
 
 interface UseModuleAssignmentsState {
   data: ModuleAssignment[];
@@ -217,5 +224,83 @@ export const useModuleAssignment = (id: string) => {
   return {
     ...state,
     refetch: fetchModuleAssignment,
+  };
+};
+
+// Hook for fetching module submission details
+export const useModuleSubmissionDetails = () => {
+  const [state, setState] = useState<{
+    data: ModuleSubmissionDetails[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    data: [],
+    loading: false,
+    error: null,
+  });
+
+  const fetchAllSubmissionDetails = useCallback(async (params?: ModuleAssignmentsParams) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const response = await moduleAssignmentsApi.getAllModuleSubmissionDetails(params);
+      
+      if (response.success) {
+        setState(prev => ({
+          ...prev,
+          data: response.data,
+          loading: false,
+          error: null,
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: response.message || 'Failed to fetch submission details',
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error in fetchAllSubmissionDetails:', error);
+      let errorMessage = 'An error occurred while fetching submission details';
+      
+      if (error.response?.status === 400) {
+        errorMessage = 'Bad request - please check the API parameters';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Unauthorized - please check your authentication';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'API endpoint not found';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error - please try again later';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+      }));
+    }
+  }, []);
+
+  const fetchSubmissionDetails = useCallback(async (moduleId: string): Promise<ModuleSubmissionDetailsResponse> => {
+    try {
+      const response = await moduleAssignmentsApi.getModuleSubmissionDetails(moduleId);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }, []);
+
+  const clearError = useCallback(() => {
+    setState(prev => ({ ...prev, error: null }));
+  }, []);
+
+  return {
+    ...state,
+    fetchAllSubmissionDetails,
+    fetchSubmissionDetails,
+    clearError,
+    refetch: () => fetchAllSubmissionDetails(),
   };
 };

@@ -74,6 +74,52 @@ export interface ModuleAssignmentsParams {
   instructorId?: string;
 }
 
+// Submission details interfaces
+export interface SubmissionDetails {
+  completionPercentage: number;
+  submissionId: string;
+  isSubmitted: boolean;
+  canApprove: boolean;
+  statusDisplay: string;
+  deadline: string;
+  submittedAt?: string;
+  isApproved: boolean;
+  status: string;
+}
+
+export interface ModuleSubmissionDetails {
+  lecturerId: string;
+  groupName: string;
+  moduleCode: string;
+  lecturerName: string;
+  catSubmission: SubmissionDetails;
+  moduleName: string;
+  semesterName: string;
+  examSubmission: SubmissionDetails;
+  overallSubmission: {
+    submissionId: string;
+    canApprove: boolean;
+    statusDisplay: string;
+    status: string;
+  };
+  moduleAssignmentId: string;
+  groupCode: string;
+}
+
+export interface ModuleSubmissionDetailsResponse {
+  success: boolean;
+  message: string;
+  data: ModuleSubmissionDetails;
+  timestamp: string;
+}
+
+export interface ModuleSubmissionDetailsListResponse {
+  success: boolean;
+  message: string;
+  data: ModuleSubmissionDetails[];
+  timestamp: string;
+}
+
 // API functions
 export const moduleAssignmentsApi = {
   // Get all module assignments with optional filters and pagination
@@ -104,5 +150,46 @@ export const moduleAssignmentsApi = {
   getModuleAssignmentsBySemester: async (semesterId: string, params?: ModuleAssignmentsParams): Promise<ModuleAssignmentsResponse> => {
     const response = await api.get(`/academics/module-assignments/semester/${semesterId}`, { params });
     return response.data;
+  },
+
+  // Get submission details for a specific module
+  getModuleSubmissionDetails: async (moduleId: string): Promise<ModuleSubmissionDetailsResponse> => {
+    const response = await api.get(`/grading/marks-submission/module/${moduleId}/submission-details`);
+    return response.data;
+  },
+
+  // Get submission details for all modules (for HOD view)
+  // Since the bulk endpoint might not exist, we'll fetch module assignments first
+  // and then get submission details for each module that has submissions
+  getAllModuleSubmissionDetails: async (params?: ModuleAssignmentsParams): Promise<ModuleSubmissionDetailsListResponse> => {
+    try {
+      // First, try to get all module assignments
+      const assignmentsResponse = await moduleAssignmentsApi.getModuleAssignments(params);
+      const assignments = assignmentsResponse.data.content;
+      
+      // Then get submission details for each assignment
+      const submissionDetailsPromises = assignments.map(async (assignment) => {
+        try {
+          const submissionResponse = await moduleAssignmentsApi.getModuleSubmissionDetails(assignment.id);
+          return submissionResponse.data;
+        } catch (error) {
+          // If submission details don't exist for this module, skip it
+          console.warn(`No submission details found for module ${assignment.id}`);
+          return null;
+        }
+      });
+      
+      const submissionDetails = (await Promise.all(submissionDetailsPromises)).filter(Boolean);
+      
+      return {
+        success: true,
+        message: 'Submission details retrieved successfully',
+        data: submissionDetails,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error fetching submission details:', error);
+      throw error;
+    }
   },
 };

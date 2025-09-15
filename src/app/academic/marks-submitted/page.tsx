@@ -26,7 +26,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Loader2 } from "lucide-react";
-import { useModuleAssignments } from "@/hooks/modules/useModuleAssignments";
+import { useModuleSubmissionDetails } from "@/hooks/modules/useModuleAssignments";
 
 // Keep existing analytics dummy data
 const gradeDistributionData = [
@@ -99,17 +99,20 @@ export default function MarksSubmittedPage() {
   // Main tabs: 'mark-submissions', 'analytics', 'deadlines'
   const [mainActiveTab, setMainActiveTab] = React.useState("mark-submissions");
 
-  // API Hook - increase initial size to reduce need for API pagination
+  // API Hook - fetch submission details instead of module assignments
   const {
-    data: moduleAssignments,
+    data: submissionDetails,
     loading,
     error,
-    totalElements,
-    totalPages,
-    currentPage,
-    setPage,
-    clearError
-  } = useModuleAssignments({ page: 0, size: 50 });
+    clearError,
+    refetch,
+    fetchAllSubmissionDetails
+  } = useModuleSubmissionDetails();
+
+  // Fetch submission details on component mount
+  React.useEffect(() => {
+    fetchAllSubmissionDetails();
+  }, [fetchAllSubmissionDetails]);
 
   // Module Table State
   const [moduleSearch, setModuleSearch] = React.useState("");
@@ -117,36 +120,63 @@ export default function MarksSubmittedPage() {
   const [modulePage, setModulePage] = React.useState(1);
   const router = useRouter();
 
-  // Transform API data to match table format - memoized to prevent recalculation
+  // Transform submission details data to match table format - memoized to prevent recalculation
   const transformedData = React.useMemo(() => {
-    return moduleAssignments.map(assignment => ({
-      id: assignment.id,
-      lecturer: assignment.instructorName,
-      lecturerEmail: assignment.instructorEmail,
-      module: `${assignment.moduleCode} - ${assignment.moduleName}`,
-      moduleCode: assignment.moduleCode,
-      moduleName: assignment.moduleName,
-      students: assignment.currentEnrollment,
-      maxStudents: assignment.maxStudents,
-      submissionDate: Math.random() > 0.3 ? formatDate(assignment.updatedAt) : "Not submitted",
-      deadline: formatDate(assignment.endDate),
-      status: getStatusForAssignment(assignment.id), // Consistent status based on ID
-      academicYear: assignment.academicYearName,
-      semester: assignment.semesterName,
-      departmentName: assignment.departmentName,
-      schoolName: assignment.schoolName,
-      collegeName: assignment.collegeName,
-    }));
-  }, [moduleAssignments]);
+    return submissionDetails.map(submission => {
+      // Safe access with defaults for potentially null/undefined properties
+      const catSubmission = submission.catSubmission || {
+        isSubmitted: false,
+        statusDisplay: "Not Submitted",
+        submittedAt: null
+      };
+      
+      const examSubmission = submission.examSubmission || {
+        isSubmitted: false,
+        statusDisplay: "Not Submitted", 
+        submittedAt: null
+      };
+      
+      const overallSubmission = submission.overallSubmission || {
+        statusDisplay: "Not Available",
+        status: "NOT_AVAILABLE"
+      };
+
+      return {
+        id: submission.moduleAssignmentId,
+        lecturer: submission.lecturerName || "Unknown",
+        lecturerId: submission.lecturerId || "",
+        module: `${submission.moduleCode || "Unknown"} - ${submission.moduleName || "Unknown"}`,
+        moduleCode: submission.moduleCode || "Unknown",
+        moduleName: submission.moduleName || "Unknown",
+        groupName: submission.groupName || "Unknown",
+        groupCode: submission.groupCode || "",
+        semester: submission.semesterName || "Unknown",
+        catSubmission,
+        examSubmission,
+        overallSubmission,
+        // Helper properties for display
+        canViewCat: catSubmission.isSubmitted && catSubmission.statusDisplay === "Submitted",
+        canViewExam: examSubmission.isSubmitted && examSubmission.statusDisplay === "Submitted",
+        catStatus: catSubmission.statusDisplay,
+        examStatus: examSubmission.statusDisplay,
+        overallStatus: overallSubmission.statusDisplay,
+      };
+    });
+  }, [submissionDetails]);
 
   // Filter data based on search and status - memoized
   const filteredData = React.useMemo(() => {
     return transformedData.filter(row => {
       const matchesSearch = 
         row.lecturer.toLowerCase().includes(moduleSearch.toLowerCase()) ||
-        row.module.toLowerCase().includes(moduleSearch.toLowerCase());
+        row.module.toLowerCase().includes(moduleSearch.toLowerCase()) ||
+        row.moduleCode.toLowerCase().includes(moduleSearch.toLowerCase()) ||
+        row.groupName.toLowerCase().includes(moduleSearch.toLowerCase());
       
-      const matchesStatus = statusFilter === "All Status" || row.status === statusFilter;
+      const matchesStatus = statusFilter === "All Status" || 
+        row.overallStatus === statusFilter ||
+        row.catStatus === statusFilter ||
+        row.examStatus === statusFilter;
       
       return matchesSearch && matchesStatus;
     });
@@ -168,6 +198,24 @@ export default function MarksSubmittedPage() {
   // Deadlines state
   const [selectedModule, setSelectedModule] = React.useState("");
   const [selectedDeadline, setSelectedDeadline] = React.useState("");
+
+  // Extract module assignments for the deadlines dropdown
+  const moduleAssignments = React.useMemo(() => {
+    // Remove duplicates by moduleAssignmentId
+    const seen = new Set<string>();
+    return submissionDetails
+      .filter((submission) => {
+        if (!submission.moduleAssignmentId || seen.has(submission.moduleAssignmentId)) return false;
+        seen.add(submission.moduleAssignmentId);
+        return true;
+      })
+      .map((submission) => ({
+        id: submission.moduleAssignmentId,
+        moduleId: submission.moduleAssignmentId,
+        moduleCode: submission.moduleCode || "Unknown",
+        moduleName: submission.moduleName || "Unknown",
+      }));
+  }, [submissionDetails]);
 
   const renderStatusBadge = (status: string) => {
     const statusConfig = {
@@ -325,7 +373,7 @@ export default function MarksSubmittedPage() {
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-[#026892]" />
-              <span className="ml-2 text-gray-600">Loading module assignments...</span>
+              <span className="ml-2 text-gray-600">Loading submission details...</span>
             </div>
           ) : (
             <>
@@ -335,12 +383,10 @@ export default function MarksSubmittedPage() {
                     <TableRow className="bg-gray-50">
                       <TableHead className="text-gray-700 font-semibold">Lecturer</TableHead>
                       <TableHead className="text-gray-700 font-semibold">Module</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Students</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Submission Date
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Deadline</TableHead>
-                      <TableHead className="text-gray-700 font-semibold">Status</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Group</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">CAT Status</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">EXAM Status</TableHead>
+                      <TableHead className="text-gray-700 font-semibold">Overall Status</TableHead>
                       <TableHead className="text-right text-gray-700 font-semibold">
                         Actions
                       </TableHead>
@@ -359,72 +405,103 @@ export default function MarksSubmittedPage() {
                           <TableCell className="text-gray-700 text-sm">
                             <div>
                               <div className="font-medium">{row.lecturer}</div>
-                              <div className="text-xs text-gray-500">{row.departmentName}</div>
+                              <div className="text-xs text-gray-500">ID: {row.lecturerId}</div>
                             </div>
                           </TableCell>
                           <TableCell className="text-gray-700 text-sm">
                             <div>
                               <div className="font-medium">{row.moduleCode}</div>
-                              <div className="text-xs text-gray-500">{row.moduleName}</div>
+                              <div className="text-xs text-gray-500 max-w-xs truncate">{row.moduleName}</div>
+                              <div className="text-xs text-gray-400">{row.semester}</div>
                             </div>
                           </TableCell>
                           <TableCell className="text-gray-700 text-sm">
-                            {row.students}/{row.maxStudents}
-                          </TableCell>
-                          <TableCell className="text-gray-700 text-sm">
-                            {row.submissionDate}
-                          </TableCell>
-                          <TableCell className="text-gray-700 text-sm">
-                            {row.deadline}
+                            <div>
+                              <div className="font-medium">{row.groupName}</div>
+                              <div className="text-xs text-gray-500">{row.groupCode}</div>
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {renderStatusBadge(row.status)}
+                            <Badge 
+                              variant={row.catSubmission.isSubmitted ? "default" : "secondary"}
+                              className={`text-xs ${
+                                row.catSubmission.isSubmitted 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {row.catStatus}
+                            </Badge>
+                            {row.catSubmission.submittedAt && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {new Date(row.catSubmission.submittedAt).toLocaleDateString()}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={row.examSubmission.isSubmitted ? "default" : "secondary"}
+                              className={`text-xs ${
+                                row.examSubmission.isSubmitted 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {row.examStatus}
+                            </Badge>
+                            {row.examSubmission.submittedAt && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {new Date(row.examSubmission.submittedAt).toLocaleDateString()}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={row.overallSubmission.status === "APPROVED" ? "default" : "secondary"}
+                              className={`text-xs ${
+                                row.overallSubmission.status === "APPROVED"
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : row.overallSubmission.status === "PENDING"
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {row.overallStatus}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right flex gap-2 justify-end">
-                            <button
-                              className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium"
-                              onClick={() =>
-                                router.push(
-                                  `/academic/marks-submitted/${encodeURIComponent(
-                                    row.module
-                                  )}`
-                                )
-                              }
-                            >
+                            {(row.canViewCat || row.canViewExam) && (
+                              <button
+                                className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium"
+                                onClick={() =>
+                                  router.push(
+                                    `/academic/marks-submitted/results?moduleId=${encodeURIComponent(
+                                      row.id
+                                    )}`
+                                  )
+                                }
+                              >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
                                 fill="none"
                                 viewBox="0 0 24 24"
+                                strokeWidth={1.5}
                                 stroke="currentColor"
+                                className="w-4 h-4"
                               >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                                 />
                               </svg>
-                              View
+                              View Marks
                             </button>
-                            {row.status === "Overdue" && (
-                              <button className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 8v6m0 0l-3-3m3 3l3-3"
-                                  />
-                                </svg>
-                                Remind
-                              </button>
                             )}
                           </TableCell>
                         </TableRow>
@@ -436,7 +513,7 @@ export default function MarksSubmittedPage() {
               {/* Pagination Controls */}
               <div className="flex justify-between items-center mt-4">
                 <div className="text-sm text-gray-600">
-                  Showing {modulePaginatedData.length} of {filteredData.length} filtered results ({totalElements} total)
+                  Showing {modulePaginatedData.length} of {filteredData.length} filtered results ({submissionDetails.length} total)
                 </div>
                 <div className="flex gap-2">
                   <button
