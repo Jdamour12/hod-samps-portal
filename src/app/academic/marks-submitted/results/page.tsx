@@ -7,10 +7,13 @@ import { useExamSheet } from "@/hooks/module-marks/useExamSheet";
 import { useSubmission } from "@/hooks/useSubmission";
 import { saveAs } from "file-saver";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   ChevronRight,
   Search,
@@ -20,6 +23,7 @@ import {
   AlertCircle,
   CheckCircle,
   X,
+  MessageSquare,
 } from "lucide-react";
 
 export default function ResultsPage() {
@@ -31,6 +35,11 @@ export default function ResultsPage() {
   const [search, setSearch] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [showSubmissionMessage, setShowSubmissionMessage] = useState(false);
+  
+  // Approval dialog state
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [approvalComments, setApprovalComments] = useState("");
+  const [approvalNotes, setApprovalNotes] = useState("");
   
   // Submission hook
   const {
@@ -75,7 +84,7 @@ export default function ResultsPage() {
       const timer = setTimeout(() => {
         setShowSubmissionMessage(false);
         if (submissionData) {
-          // Don't clear the submitted state on success - keep button as "Submitted"
+          // Don't clear the submitted state on success - keep button as "Approved"
         } else {
           setSubmitted(false);
         }
@@ -121,17 +130,39 @@ export default function ResultsPage() {
     window.location.href = "/academic/marks-submitted";
   };
 
-  const handleApprove = async () => {
+  // Updated approval handler with dialog
+  const handleApproveClick = () => {
     if (!moduleId || currentData.length === 0) {
       alert("No data to approve");
       return;
     }
     
+    // Set default comments based on tab
+    if (activeTab === "assessments") {
+      setApprovalComments("CAT marks have been reviewed and approved");
+      setApprovalNotes("Good performance overall");
+    } else {
+      setApprovalComments("EXAM marks verified and approved for processing");
+      setApprovalNotes("Examination was conducted fairly");
+    }
+    
+    setShowApprovalDialog(true);
+  };
+
+  const handleApprovalSubmit = async () => {
+    if (!moduleId) return;
+    
+    setShowApprovalDialog(false);
     setSubmitted(false);
     setShowSubmissionMessage(false);
     clearSubmission();
     
-    await submit(moduleId, activeTab === "assessments" ? "cat" : "exam");
+    const options = {
+      comments: approvalComments.trim() || undefined,
+      additionalNotes: approvalNotes.trim() || undefined
+    };
+    
+    await submit(moduleId, activeTab === "assessments" ? "cat" : "exam", options);
     setSubmitted(true);
     setShowSubmissionMessage(true);
   };
@@ -278,7 +309,7 @@ export default function ResultsPage() {
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-blue-600 hover:bg-blue-700"
                   }`}
-                  onClick={handleApprove}
+                  onClick={handleApproveClick}
                   disabled={
                     isSubmitting || 
                     currentLoading || 
@@ -290,7 +321,9 @@ export default function ResultsPage() {
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   ) : submitted && submissionData ? (
                     <CheckCircle className="h-4 w-4 mr-2" />
-                  ) : null}
+                  ) : (
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                  )}
                   {isSubmitting
                     ? "Approving..."
                     : submitted && submissionData
@@ -314,6 +347,61 @@ export default function ResultsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Approval Dialog */}
+        <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                Approve {activeTab === "assessments" ? "CAT" : "Exam"} Marks
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="comments">Approval Comments</Label>
+                <Textarea
+                  id="comments"
+                  placeholder="Enter your approval comments..."
+                  value={approvalComments}
+                  onChange={(e) => setApprovalComments(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Additional Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Any additional notes or observations..."
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>This will approve the {activeTab === "assessments" ? "CAT" : "exam"} marks for forwarding to the next approval level.</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowApprovalDialog(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleApprovalSubmit}
+                disabled={isSubmitting || !approvalComments.trim()}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isSubmitting ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
+                {isSubmitting ? "Approving..." : "Submit Approval"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Submission Success/Error Message */}
         {showSubmissionMessage && (submissionData || submissionError) && (
@@ -390,8 +478,7 @@ export default function ResultsPage() {
                   Data
                 </div>
                 <div className="text-gray-400 text-center">
-                  No {activeTab} data found for this module or the Excel file is
-                  empty.
+                  No {activeTab} data found for this module or the Excel file is empty.
                 </div>
               </div>
             ) : (
