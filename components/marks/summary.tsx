@@ -1,6 +1,6 @@
-"use client"
+﻿"use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -8,18 +8,16 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExcelPreviewTable } from '@/components/ui/excel-preview-table'
-import { Download, FileSpreadsheet, AlertCircle, RefreshCw, Eye } from 'lucide-react'
+import { Download, FileSpreadsheet, AlertCircle, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { 
-  fetchGradingExcelSheet, 
-  downloadGradingExcelSheet, 
-  fetchAndParseGradingSheet,
-  validateGradingSheetParams,
-  formatFileSize,
-  type ExcelPreviewData 
-} from '@/lib/api-grading'
+  generateYearSummarySheet, 
+  generateSummarySheetForPreview,
+  fetchAndParseSummarySheet
+} from '@/lib/api-summary'
+import { type SummarySheetResponse } from '@/lib/api-summary'
 
-interface GradingSheetInfo {
+interface SummarySheetInfo {
   yearId: string
   groupId: string
   filename?: string
@@ -27,34 +25,35 @@ interface GradingSheetInfo {
   size?: number
 }
 
-interface ExcelMarksPageProps {
+interface SummaryPageProps {
   groupId?: string
   academicYearId?: string
 }
 
-export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPageProps) {
+export default function SummaryPage({ groupId, academicYearId }: SummaryPageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
-  const [sheetInfo, setSheetInfo] = useState<GradingSheetInfo>({
+  const [sheetInfo, setSheetInfo] = useState<SummarySheetInfo>({
     yearId: academicYearId || '',
     groupId: groupId || ''
   })
   const [error, setError] = useState<string | null>(null)
-  const [previewData, setPreviewData] = useState<ExcelPreviewData | null>(null)
+  const [previewData, setPreviewData] = useState<any | null>(null)
   const [activeTab, setActiveTab] = useState<"info" | "preview">("info")
   const { toast } = useToast()
 
-    // Function to fetch the Excel sheet info
+  // Function to fetch the Excel sheet info
   const fetchSheetInfo = async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // Validate parameters first
-      validateGradingSheetParams(sheetInfo)
+      if (!sheetInfo.yearId || !sheetInfo.groupId) {
+        throw new Error('Academic Year ID and Group ID are required for summary sheet generation.')
+      }
       
-      const { blob, filename } = await fetchGradingExcelSheet(sheetInfo)
+      const { blob, filename } = await generateSummarySheetForPreview(sheetInfo.yearId, sheetInfo.groupId)
       
       // Update sheet info with fetched data
       setSheetInfo(prev => ({
@@ -66,7 +65,7 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
 
       toast({
         title: "Sheet Info Updated",
-        description: "Successfully fetched grading sheet information.",
+        description: "Successfully fetched summary sheet information.",
       })
 
     } catch (err) {
@@ -81,15 +80,17 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
       setIsLoading(false)
     }
   }
+
   const loadPreview = async () => {
     setIsPreviewLoading(true)
     setError(null)
 
     try {
-      // Validate parameters first
-      validateGradingSheetParams(sheetInfo)
+      if (!sheetInfo.yearId || !sheetInfo.groupId) {
+        throw new Error('Academic Year ID and Group ID are required for summary sheet generation.')
+      }
       
-      const previewData = await fetchAndParseGradingSheet(sheetInfo)
+      const previewData = await fetchAndParseSummarySheet(sheetInfo.yearId, sheetInfo.groupId)
       setPreviewData(previewData)
       
       // Update sheet info with preview data
@@ -100,18 +101,19 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
         lastModified: new Date()
       }))
 
-      setActiveTab("preview")
-      
       toast({
         title: "Preview Loaded",
-        description: `Successfully loaded Excel preview with ${previewData.sheets.length} sheet(s).`,
+        description: "Summary sheet preview loaded successfully.",
       })
+
+      // Switch to preview tab automatically
+      setActiveTab("preview")
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       toast({
-        title: "Preview Failed",
+        title: "Preview Error",
         description: errorMessage,
         variant: "destructive",
       })
@@ -120,15 +122,12 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
     }
   }
 
-  // Auto-load preview when component mounts (client-side only)
-  const hasAutoLoaded = useRef(false)
+  // Load preview automatically when component mounts (if we have required data)
   useEffect(() => {
-    // Guard to prevent double-calls in React Strict Mode during development
-    if (hasAutoLoaded.current) return
-    hasAutoLoaded.current = true
-
-    // Try to load preview automatically; errors are handled inside loadPreview
-    void loadPreview()
+    if (sheetInfo.yearId && sheetInfo.groupId) {
+      // Try to load preview automatically; errors are handled inside loadPreview
+      void loadPreview()
+    }
   }, [])
 
   // Function to download the Excel sheet
@@ -137,14 +136,15 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
     setError(null)
 
     try {
-      // Validate parameters first
-      validateGradingSheetParams(sheetInfo)
+      if (!sheetInfo.yearId || !sheetInfo.groupId) {
+        throw new Error('Academic Year ID and Group ID are required for summary sheet generation.')
+      }
       
-      const filename = await downloadGradingExcelSheet(sheetInfo)
+      await generateYearSummarySheet(sheetInfo.yearId, sheetInfo.groupId)
       
       toast({
         title: "Download Started",
-        description: `Excel sheet "${filename}" is being downloaded.`,
+        description: "Excel summary sheet is being downloaded.",
       })
 
     } catch (err) {
@@ -158,6 +158,29 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
     } finally {
       setIsDownloading(false)
     }
+  }
+
+  // Show validation message if no real data is provided
+  if (!groupId || !academicYearId) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-medium">Real Group Data Required</h3>
+                  <p className="text-sm mt-1">
+                    Please navigate from the main classes page to load real group and academic year information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -182,10 +205,10 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileSpreadsheet className="h-5 w-5 text-green-600" />
-                Grading Sheet Information
+                Summary Sheet Information
               </CardTitle>
               <CardDescription>
-                Current semester regular grading sheet details
+                Academic year summary sheet details
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -199,32 +222,34 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
                   {sheetInfo.size && (
                     <div>
                       <label className="text-sm font-medium text-gray-700">File Size</label>
-                      <p className="text-sm text-gray-900">{formatFileSize(sheetInfo.size)}</p>
+                      <p className="text-sm text-gray-900">{(sheetInfo.size / 1024).toFixed(1)} KB</p>
                     </div>
                   )}
                   {sheetInfo.lastModified && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Last Generated</label>
-                      <p className="text-sm text-gray-900">
-                        {sheetInfo.lastModified.toLocaleString()}
-                      </p>
+                      <label className="text-sm font-medium text-gray-700">Last Modified</label>
+                      <p className="text-sm text-gray-900">{sheetInfo.lastModified.toLocaleString()}</p>
                     </div>
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
 
-          {/* Actions Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-              <CardDescription>
-                Generate and download the Excel grading sheet
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Academic Year ID</label>
+                  <p className="text-sm text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded">
+                    {sheetInfo.yearId}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Group ID</label>
+                  <p className="text-sm text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded">
+                    {sheetInfo.groupId}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-4 border-t">
                 <Button 
                   onClick={fetchSheetInfo}
                   disabled={isLoading}
@@ -234,9 +259,9 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
                   {isLoading ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <RefreshCw className="h-4 w-4" />
                   )}
-                  {isLoading ? 'Loading...' : 'Fetch Sheet Info'}
+                  {isLoading ? 'Updating...' : 'Refresh Info'}
                 </Button>
                 
                 <Button 
@@ -263,7 +288,7 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
                   ) : (
                     <Download className="h-4 w-4" />
                   )}
-                  {isDownloading ? 'Downloading...' : 'Download Excel Sheet'}
+                  {isDownloading ? 'Downloading...' : 'Download Summary Sheet'}
                 </Button>
               </div>
             </CardContent>
@@ -316,7 +341,7 @@ export default function ExcelMarksPage({ groupId, academicYearId }: ExcelMarksPa
                   <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Preview Available</h3>
                   <p className="text-gray-500 mb-4">
-                    Load the Excel preview to view the sheet contents before downloading.
+                    Load the Excel preview to view the summary sheet contents before downloading.
                   </p>
                   <Button onClick={loadPreview} disabled={isPreviewLoading}>
                     {isPreviewLoading ? (

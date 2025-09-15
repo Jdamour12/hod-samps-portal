@@ -25,8 +25,10 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, CheckCircle } from "lucide-react";
 import { useModuleAssignments } from "@/hooks/modules/useModuleAssignments";
+import { submitToDean } from "@/lib/module-marks/grading-api";
+import { useToast } from "@/hooks/use-toast";
 
 // Keep existing analytics dummy data
 const gradeDistributionData = [
@@ -116,12 +118,99 @@ export default function MarksSubmittedPage() {
   const [statusFilter, setStatusFilter] = React.useState("All Status");
   const [yearFilter, setYearFilter] = React.useState("All Years");
   const [localPage, setLocalPage] = React.useState(1);
+  const [approvingIds, setApprovingIds] = React.useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = React.useState(false);
+  const { toast } = useToast();
   const router = useRouter();
+
+  // Handle approval of submission to dean
+  const handleApproveSubmission = async (groupId: string, semesterId: string, assignmentId: string) => {
+    setApprovingIds(prev => new Set(prev).add(assignmentId));
+    
+    try {
+      await submitToDean(groupId, semesterId);
+      
+      toast({
+        title: "Success!",
+        description: "Marks have been successfully submitted to the dean for approval.",
+        variant: "default",
+      });
+      
+      // Optionally refresh the data or update the status locally
+      // For now, we'll keep the current approach where status is generated from ID
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit marks to dean. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setApprovingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(assignmentId);
+        return newSet;
+      });
+    }
+  };
+
+  // Handle bulk approval of all pending submissions
+  const handleBulkApproval = async () => {
+    const pendingItems = filteredData.filter(row => row.status === "Pending");
+    
+    if (pendingItems.length === 0) {
+      toast({
+        title: "No Pending Items",
+        description: "There are no pending submissions to approve.",
+        variant: "default",
+      });
+      return;
+    }
+
+    setBulkApproving(true);
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
+
+    for (const item of pendingItems) {
+      try {
+        await submitToDean(item.groupId, item.semesterId);
+        successCount++;
+      } catch (error: any) {
+        errorCount++;
+        errors.push(`${item.className}: ${error.message}`);
+      }
+    }
+
+    setBulkApproving(false);
+
+    // Show results
+    if (successCount > 0 && errorCount === 0) {
+      toast({
+        title: "Success!",
+        description: `Successfully approved ${successCount} submission${successCount > 1 ? 's' : ''} to the dean.`,
+        variant: "default",
+      });
+    } else if (successCount > 0 && errorCount > 0) {
+      toast({
+        title: "Partial Success",
+        description: `Approved ${successCount} submissions. ${errorCount} failed. Check individual items for details.`,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: `Failed to approve any submissions. ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`,
+        variant: "destructive",
+      });
+    }
+  };
 
   // Transform API data to match table format - memoized to prevent recalculation
   const transformedData = React.useMemo(() => {
     return moduleAssignments.map(assignment => ({
       id: assignment.id,
+      groupId: assignment.groupId, // Add group ID
       className: `${assignment.groupName} (${assignment.groupCode})`,
       lecturer: assignment.instructorName,
       lecturerEmail: assignment.instructorEmail,
@@ -134,7 +223,9 @@ export default function MarksSubmittedPage() {
       deadline: formatDate(assignment.endDate),
       status: getStatusForAssignment(assignment.id), // Consistent status based on ID
       academicYear: assignment.academicYearName,
+      academicYearId: assignment.academicYearId, // Add academic year ID  
       semester: assignment.semesterName,
+      semesterId: assignment.semesterId, // Add semester ID
       departmentName: assignment.departmentName,
       schoolName: assignment.schoolName,
       collegeName: assignment.collegeName,
@@ -144,16 +235,16 @@ export default function MarksSubmittedPage() {
   // Filter data based on search and filters - memoized
   const filteredData = React.useMemo(() => {
     return transformedData.filter(row => {
-      const matchesSearch = 
+      const matchesSearch =
         row.className.toLowerCase().includes(moduleSearch.toLowerCase()) ||
         row.lecturer.toLowerCase().includes(moduleSearch.toLowerCase()) ||
         row.module.toLowerCase().includes(moduleSearch.toLowerCase());
-      
+
       const matchesStatus = statusFilter === "All Status" || row.status === statusFilter;
-      
+
       // For year filter, you might want to extract year from academicYear or className
       const matchesYear = yearFilter === "All Years"; // Implement year filtering logic as needed
-      
+
       return matchesSearch && matchesStatus && matchesYear;
     });
   }, [transformedData, moduleSearch, statusFilter, yearFilter]);
@@ -214,7 +305,7 @@ export default function MarksSubmittedPage() {
     };
 
     const config = statusConfig[status as keyof typeof statusConfig];
-    
+
     return (
       <span className={`${config.className} px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1`}>
         {config.icon}
@@ -235,38 +326,49 @@ export default function MarksSubmittedPage() {
       <div className="flex items-center justify-between mb-4 mt-4">
         <div className="flex gap-2 w-full">
           <button
-            className={`px-6 py-2 rounded-md font-medium text-sm border ${
-              mainActiveTab === "mark-submissions"
+            className={`px-6 py-2 rounded-md font-medium text-sm border ${mainActiveTab === "mark-submissions"
                 ? "bg-[#026892] text-white border-gray-200 hover:bg-[#026892]/90"
                 : "bg-white text-black border-gray-200 hover:bg-gray-100"
-            }`}
+              }`}
             onClick={() => setMainActiveTab("mark-submissions")}
           >
             Mark Submissions
           </button>
           <button
-            className={`px-6 py-2 rounded-md font-medium text-sm border ${
-              mainActiveTab === "analytics"
+            className={`px-6 py-2 rounded-md font-medium text-sm border ${mainActiveTab === "analytics"
                 ? "bg-[#026892] text-white border-gray-200 hover:bg-[#026892]/90"
                 : "bg-white text-black border-gray-200 hover:bg-gray-100"
-            }`}
+              }`}
             onClick={() => setMainActiveTab("analytics")}
           >
             Analytics
           </button>
           <button
-            className={`px-6 py-2 rounded-md font-medium text-sm border ${
-              mainActiveTab === "deadlines"
+            className={`px-6 py-2 rounded-md font-medium text-sm border ${mainActiveTab === "deadlines"
                 ? "bg-[#026892] text-white border-gray-200 hover:bg-[#026892]/90"
                 : "bg-white text-black border-gray-200 hover:bg-gray-100"
-            }`}
+              }`}
             onClick={() => setMainActiveTab("deadlines")}
           >
             Deadlines
           </button>
         </div>
-        <button className="bg-[#026892] text-white px-2 py-2 rounded-md font-medium text-sm hover:bg-[#026892]/90 w-[180px]">
-          Export All Marks
+        <button 
+          className="bg-[#026892] text-white px-2 py-2 rounded-md font-medium text-sm hover:bg-[#026892]/90 w-[180px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          onClick={handleBulkApproval}
+          disabled={bulkApproving || filteredData.filter(row => row.status === "Pending").length === 0}
+        >
+          {bulkApproving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Approving...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4" />
+              Approve All Pending
+            </>
+          )}
         </button>
       </div>
 
@@ -275,7 +377,7 @@ export default function MarksSubmittedPage() {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
           <div className="flex justify-between items-center">
             <span>{error}</span>
-            <button 
+            <button
               onClick={clearError}
               className="text-red-700 hover:text-red-900"
             >
@@ -296,7 +398,7 @@ export default function MarksSubmittedPage() {
           </p>
 
           <div className="flex gap-2 mb-4 items-center">
-            <select 
+            <select
               value={yearFilter}
               onChange={(e) => setYearFilter(e.target.value)}
               className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
@@ -306,7 +408,7 @@ export default function MarksSubmittedPage() {
               <option>Year 2</option>
               <option>Year 3</option>
             </select>
-            <select 
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="border rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
@@ -421,10 +523,15 @@ export default function MarksSubmittedPage() {
                             <button
                               className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium"
                               onClick={() => {
+                                // Store group ID and academic data in localStorage for the class page
+                                localStorage.setItem('selectedGroupId', row.groupId);
+                                localStorage.setItem('selectedAcademicYearId', row.academicYearId);
+                                localStorage.setItem('selectedSemesterId', row.semesterId);
+                                
                                 router.push(
                                   `/academic/classes-marks/class/${encodeURIComponent(
                                     row.className
-                                  )}/2025`
+                                  )}/${row.academicYearId}?groupId=${row.groupId}&semesterId=${row.semesterId}`
                                 );
                               }}
                             >
@@ -444,6 +551,20 @@ export default function MarksSubmittedPage() {
                               </svg>{" "}
                               View
                             </button>
+                            {row.status === "Pending" && (
+                              <button 
+                                className="flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 px-3 py-1 rounded-md text-sm font-medium"
+                                onClick={() => handleApproveSubmission(row.groupId, row.semesterId, row.id)}
+                                disabled={approvingIds.has(row.id)}
+                              >
+                                {approvingIds.has(row.id) ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
+                                {approvingIds.has(row.id) ? "Approving..." : "Approvety"}
+                              </button>
+                            )}
                             {row.status === "Overdue" && (
                               <button className="flex items-center gap-1 text-[#0891b2] bg-[#e0f2fe] hover:bg-[#bae6fd] px-3 py-1 rounded-md text-sm font-medium">
                                 <svg
@@ -555,9 +676,8 @@ export default function MarksSubmittedPage() {
                 >
                   <span className="text-gray-600">{grade.grade} Grades:</span>
                   <span
-                    className={`font-semibold ${
-                      grade.grade === "F" ? "text-red-600" : "text-gray-900"
-                    }`}
+                    className={`font-semibold ${grade.grade === "F" ? "text-red-600" : "text-gray-900"
+                      }`}
                   >
                     {grade.percentage}%
                   </span>
@@ -678,11 +798,10 @@ export default function MarksSubmittedPage() {
               {deadlinesData.map((deadline, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg border ${
-                    deadline.status === "Overdue"
+                  className={`p-4 rounded-lg border ${deadline.status === "Overdue"
                       ? "bg-red-50 border-red-200"
                       : "bg-yellow-50 border-yellow-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -698,11 +817,10 @@ export default function MarksSubmittedPage() {
                     </div>
                     <div className="text-right">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                          deadline.status === "Overdue"
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${deadline.status === "Overdue"
                             ? "bg-red-100 text-red-700"
                             : "bg-yellow-100 text-yellow-700"
-                        }`}
+                          }`}
                       >
                         {deadline.status}
                       </span>

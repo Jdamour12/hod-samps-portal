@@ -108,3 +108,36 @@ export const approveExamMarksByHOD = async (moduleId: string): Promise<void> => 
     }
   }
 };
+
+// Submit group marks to dean for approval
+export const submitToDean = async (
+  groupId: string, 
+  semesterId: string, 
+  submissionNotes?: string
+): Promise<any> => {
+  try {
+    const response = await api.post(`/grading/group-submissions/submit-to-dean`, {
+      groupId,
+      semesterId,
+      submissionNotes: submissionNotes || "All marks verified and ready for review",
+      priorityLevel: "NORMAL",
+      submissionType: "REGULAR"
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error submitting to dean:', error);
+    if (error.response?.status === 404) {
+      throw new Error('Group or semester not found');
+    } else if (error.response?.status === 409) {
+      throw new Error('Marks have already been submitted to dean');
+    } else if (error.response?.status === 400) {
+      throw new Error('Invalid submission data');
+    } else if (error.response?.status === 500) {
+      throw new Error('Server error while submitting to dean');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timeout - submission is taking longer than expected');
+    } else {
+      throw new Error(error.message || 'Failed to submit marks to dean');
+    }
+  }
+};

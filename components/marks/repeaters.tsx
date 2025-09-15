@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,22 +11,26 @@ import {
   fetchAndParseRetakersSheet,
   validateRetakersSheetParams,
   type RetakersExcelPreviewData,
-  type RetakersSheetParams,
-  DEFAULT_RETAKERS_PARAMS
+  type RetakersSheetParams
 } from '@/lib/api-retakers';
 
 interface RepeatersComponentProps {
   className?: string;
   year?: string;
+  groupId?: string;
+  academicYearId?: string;
 }
 
-const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year }) => {
+const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year, groupId, academicYearId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   
-  // Default parameters - using imported constants
-  const [sheetInfo] = useState<RetakersSheetParams>(DEFAULT_RETAKERS_PARAMS);
+  // Use provided IDs from backend - no fallback defaults
+  const [sheetInfo] = useState<RetakersSheetParams>({
+    yearId: academicYearId || '',
+    groupId: groupId || ''
+  });
   
   const [error, setError] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<RetakersExcelPreviewData | null>(null);
@@ -60,6 +64,14 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
     }
   };
 
+  // Auto-load preview on mount (client-side only). Use a ref guard to avoid double-calls in Strict Mode
+  const hasAutoLoaded = useRef(false);
+  useEffect(() => {
+    if (hasAutoLoaded.current) return;
+    hasAutoLoaded.current = true;
+    void loadPreview();
+  }, []);
+
   const downloadSheet = async () => {
     setIsDownloading(true);
     setError(null);
@@ -85,11 +97,7 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
     }
   };
 
-  const mockRepeaters = [
-    { id: "S006", name: "David Lee", previousGrade: "F", currentStatus: "Retaking", reason: "Failed final exam" },
-    { id: "S007", name: "Emma Davis", previousGrade: "D", currentStatus: "Repeating", reason: "Below minimum requirement" },
-    { id: "S008", name: "Mike Taylor", previousGrade: "F", currentStatus: "Retaking", reason: "Did not complete assignments" },
-  ];
+
 
   return (
     <div className="space-y-6">
