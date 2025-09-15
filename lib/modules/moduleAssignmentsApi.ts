@@ -179,7 +179,9 @@ export const moduleAssignmentsApi = {
         }
       });
       
-      const submissionDetails = (await Promise.all(submissionDetailsPromises)).filter(Boolean);
+      const submissionDetails = (await Promise.all(submissionDetailsPromises)).filter(
+        (detail): detail is ModuleSubmissionDetails => detail !== null
+      );
       
       return {
         success: true,
