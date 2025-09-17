@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, FileSpreadsheet, AlertCircle, RefreshCw, Eye } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Download, FileSpreadsheet, AlertCircle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   fetchRetakersExcelSheet, 
@@ -22,7 +24,6 @@ interface RepeatersComponentProps {
 }
 
 const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year, groupId, academicYearId }) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   
@@ -34,7 +35,6 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
   
   const [error, setError] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<RetakersExcelPreviewData | null>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "preview">("info");
   const { toast } = useToast();
 
   const loadPreview = async () => {
@@ -45,7 +45,6 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
       validateRetakersSheetParams(sheetInfo);
       const data = await fetchAndParseRetakersSheet(sheetInfo);
       setPreviewData(data);
-      setActiveTab("preview");
       
       toast({
         title: "Preview Loaded",
@@ -69,8 +68,11 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
   useEffect(() => {
     if (hasAutoLoaded.current) return;
     hasAutoLoaded.current = true;
-    void loadPreview();
-  }, []);
+    
+    if (sheetInfo.yearId && sheetInfo.groupId) {
+      void loadPreview();
+    }
+  }, [sheetInfo.yearId, sheetInfo.groupId]);
 
   const downloadSheet = async () => {
     setIsDownloading(true);
@@ -97,91 +99,86 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
     }
   };
 
-
+  // Show validation message if no real data is provided
+  if (!groupId || !academicYearId) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-medium">Real Group Data Required</h3>
+                  <p className="text-sm mt-1">
+                    Please navigate from the main classes page to load real group and academic year information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-   
+      {/* Sheet Information Display */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-[#026892]" />
+            Retakers & Repeaters Sheet Information
+          </CardTitle>
+          <CardDescription>
+            Excel sheet for students who need to retake or repeat courses
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-      {/* Excel Sheet Management */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "info" | "preview")}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="info">Excel Sheet Management</TabsTrigger>
-          <TabsTrigger value="preview">Excel Preview</TabsTrigger>
-        </TabsList>
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Error:</strong> {error}
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <TabsContent value="info" className="space-y-4">
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <FileSpreadsheet className="h-8 w-8 text-[#000]" />
-              <div>
-                <h2 className="text-xl font-semibold">Retakers & Repeaters Excel Sheet</h2>
-                <p className="text-sm text-gray-600">
-                  Generate and manage Excel sheets for students who need to retake or repeat courses
-                  {className && year && ` for ${className} - ${year}`}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Button
-                  onClick={loadPreview}
-                  disabled={isPreviewLoading}
-                  className="w-full bg-[#026892] hover:bg-[#025f7f]"
-                >
-                  {isPreviewLoading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Loading Preview...
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Load Excel Preview
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  onClick={downloadSheet}
-                  disabled={isDownloading}
-                  variant="outline"
-                  className="w-full border-[#026892] text-[#026892] hover:bg-[#025f7f] hover:text-white"
-                >
-                  {isDownloading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Retakers Sheet
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium text-red-800">Error</h3>
-                  <p className="mt-1 text-sm text-red-700">{error}</p>
-                </div>
-              </div>
-            )}
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="preview" className="space-y-4">
-          {previewData ? (
+      {/* Loading State */}
+      {isPreviewLoading && (
+        <Card>
+          <CardContent className="pt-6">
             <div className="space-y-4">
-              {previewData.sheets.map((sheet, index) => (
-                <Card key={index} className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">{sheet.sheetName}</h3>
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                <span className="text-sm font-medium">Loading retakers sheet preview...</span>
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Excel Preview */}
+      {previewData ? (
+        <>
+         
+          
+          {/* Manual table display since ExcelPreviewTable might not exist */}
+          <div className="space-y-4">
+            {previewData.sheets.map((sheet, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{sheet.sheetName}</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-200">
                       <thead>
@@ -211,31 +208,26 @@ const RepeatersComponent: React.FC<RepeatersComponentProps> = ({ className, year
                       </p>
                     )}
                   </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Preview Available</h3>
-              <p className="text-gray-600 mb-4">Load the Excel preview to view the retakers sheet data.</p>
-              <Button onClick={loadPreview} disabled={isPreviewLoading} className="bg-[#026892] hover:bg-[#025f7f]">
-                {isPreviewLoading ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Load Preview
-                  </>
-                )}
-              </Button>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      ) : !isPreviewLoading && !error && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Preview Available</h3>
+            <p className="text-gray-600 mb-4">
+              The retakers sheet preview will load automatically when data is available.
+            </p>
+            <Button onClick={loadPreview} disabled={isPreviewLoading} className="bg-[#026892] hover:bg-[#025f7f]">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry Loading Preview
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
