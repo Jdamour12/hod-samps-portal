@@ -81,6 +81,33 @@ export default function MarksSubmissionDeadlinesPage() {
     Record<string, ModuleSubmissionDetails>
   >({});
 
+  // Fetch all module submission details on page load or when moduleAssignments changes
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAllSubmissions() {
+      if (!moduleAssignments || moduleAssignments.length === 0) return;
+      setModuleSubmissions({}); // clear first to avoid stale data
+      const results: Record<string, ModuleSubmissionDetails> = {};
+      await Promise.all(
+        moduleAssignments.map(async (assignment) => {
+          try {
+            const response = await getSubmissionDetails(assignment.id);
+            if (response && response.data && isMounted) {
+              results[assignment.id] = response.data;
+            }
+          } catch (err) {
+            // Optionally log or handle error per module
+          }
+        })
+      );
+      if (isMounted) setModuleSubmissions(results);
+    }
+    fetchAllSubmissions();
+    return () => {
+      isMounted = false;
+    };
+  }, [moduleAssignments, getSubmissionDetails]);
+
   // Get unique departments and semesters for filters
   const departments = useMemo(() => {
     const depts = [...new Set(moduleAssignments.map((m) => m.departmentName))];
