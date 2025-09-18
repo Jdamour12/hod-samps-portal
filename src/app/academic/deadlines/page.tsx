@@ -55,10 +55,11 @@ export default function MarksSubmissionDeadlinesPage() {
     clearError,
     refetch,
     updateFilters,
-    createSubmissions,
+    setDeadlines, // Use the new unified function
     getSubmissionDetails,
     submissionError,
     submissionDetailsError,
+    isCreatingSubmissions,
   } = useModuleAssignments({ page: 0, size: 20 });
 
   // Local state for filters and pagination
@@ -86,23 +87,45 @@ export default function MarksSubmissionDeadlinesPage() {
     let isMounted = true;
     async function fetchAllSubmissions() {
       if (!moduleAssignments || moduleAssignments.length === 0) return;
+      
+      console.log('Page: Fetching submission details for', moduleAssignments.length, 'modules');
       setModuleSubmissions({}); // clear first to avoid stale data
+      
       const results: Record<string, ModuleSubmissionDetails> = {};
-      await Promise.all(
-        moduleAssignments.map(async (assignment) => {
-          try {
-            const response = await getSubmissionDetails(assignment.id);
-            if (response && response.data && isMounted) {
-              results[assignment.id] = response.data;
+      
+      // Process in batches to avoid overwhelming the server
+      const batchSize = 5;
+      for (let i = 0; i < moduleAssignments.length; i += batchSize) {
+        const batch = moduleAssignments.slice(i, i + batchSize);
+        
+        await Promise.all(
+          batch.map(async (assignment) => {
+            try {
+              const response = await getSubmissionDetails(assignment.id);
+              if (response && response.data && isMounted) {
+                results[assignment.id] = response.data;
+              }
+            } catch (err) {
+              console.warn('Page: Failed to fetch submission details for module:', assignment.id, err);
+              // Continue with other modules even if one fails
             }
-          } catch (err) {
-            // Optionally log or handle error per module
-          }
-        })
-      );
-      if (isMounted) setModuleSubmissions(results);
+          })
+        );
+        
+        // Small delay between batches
+        if (i + batchSize < moduleAssignments.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      if (isMounted) {
+        console.log('Page: Loaded submission details for', Object.keys(results).length, 'modules');
+        setModuleSubmissions(results);
+      }
     }
+    
     fetchAllSubmissions();
+    
     return () => {
       isMounted = false;
     };
@@ -161,23 +184,33 @@ export default function MarksSubmissionDeadlinesPage() {
   // Format date for input (YYYY-MM-DD format)
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    // Ensure we get the date in local timezone
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    try {
+      const date = new Date(dateString);
+      // Ensure we get the date in local timezone
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error formatting date for input:', dateString, error);
+      return "";
+    }
   };
 
   // Format date for display
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return "Not set";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error('Error formatting date for display:', dateString, error);
+      return "Invalid date";
+    }
   };
 
   // Get status badge for submission
@@ -220,6 +253,7 @@ export default function MarksSubmissionDeadlinesPage() {
 
   // Open deadline setting modal
   const handleOpenModal = async (assignment: any) => {
+    console.log('Page: Opening modal for assignment:', assignment.id);
     setIsModalOpen(true);
     setLoadingModalData(true);
     setModalError("");
@@ -229,6 +263,8 @@ export default function MarksSubmissionDeadlinesPage() {
     try {
       const response = await getSubmissionDetails(assignment.id);
       const submissionData = response.data;
+
+      console.log('Page: Modal submission data:', submissionData);
 
       setModalData({
         moduleId: submissionData.moduleAssignmentId,
@@ -255,7 +291,7 @@ export default function MarksSubmissionDeadlinesPage() {
         [assignment.id]: submissionData,
       }));
     } catch (error: any) {
-      console.error("Error loading submission details:", error);
+      console.error("Page: Error loading submission details:", error);
       setModalError(error.message || "Failed to load submission details");
     } finally {
       setLoadingModalData(false);
@@ -272,8 +308,10 @@ export default function MarksSubmissionDeadlinesPage() {
     setSavingDeadlines(false);
   };
 
-  // Save deadlines
+  // Save deadlines - using the new unified function
   const handleSaveDeadlines = async () => {
+    console.log('Page: Saving deadlines...');
+    
     if (!modalData || !catDeadline || !examDeadline) {
       setModalError("Please set both CAT and EXAM deadlines");
       return;
@@ -305,58 +343,38 @@ export default function MarksSubmissionDeadlinesPage() {
         examDeadline: new Date(examDeadline + "T23:59:59").toISOString(),
       };
 
-      console.log(
-        "Frontend: Preparing deadlines for module:",
-        modalData.moduleId
-      );
-      console.log(
-        "Frontend: Deadlines data:",
-        JSON.stringify(deadlines, null, 2)
-      );
+      console.log('Page: Calling setDeadlines with:', { moduleId: modalData.moduleId, deadlines });
 
-      const response = await createSubmissions(modalData.moduleId, deadlines);
+      // Use the new unified function that handles both create and update
+      const response = await setDeadlines(modalData.moduleId, deadlines);
 
-      if (response && response.success) {
+      console.log('Page: setDeadlines response:', response);
+
+      if (response && (response.success || response.success === undefined)) {
         handleCloseModal();
-        refetch(); // Refresh the main data
         toast({
           title: "Success",
-          description:
-            response.message ||
-            "CAT and EXAM deadlines have been set successfully.",
+          description: response.message || "CAT and EXAM deadlines have been set successfully.",
           variant: "default",
         });
       } else {
-        const errorMsg =
-          response?.message || "Failed to save deadlines - invalid response";
+        const errorMsg = response?.message || "Failed to save deadlines - invalid response";
         setModalError(errorMsg);
-      }
-    } catch (err: any) {
-      console.error("Frontend: Error saving deadlines:", err);
-
-      // If it's a 500 error (likely means deadline already exists)
-      if (err.response?.status === 500) {
-        setModalError(
-          "This module already has deadlines set. To make changes to existing deadlines, please contact your system administrator."
-        );
-        toast({
-          title: "Cannot Set Deadline",
-          description:
-            "This module already has deadlines set. Please contact your system administrator for any changes.",
-          variant: "destructive",
-        });
-      } else {
-        // For other errors, provide a generic message
-        setModalError(
-          "Could not set deadlines at this time. Please try again later."
-        );
         toast({
           title: "Error",
-          description:
-            "Could not set deadlines. Please try again or contact support if the problem persists.",
+          description: errorMsg,
           variant: "destructive",
         });
       }
+    } catch (err: any) {
+      console.error('Page: Error saving deadlines:', err);
+      const errorMsg = err.message || "Could not save deadlines at this time. Please try again later.";
+      setModalError(errorMsg);
+      toast({
+        title: "Error",
+        description: "Could not save deadlines. Please try again or contact support if the problem persists.",
+        variant: "destructive",
+      });
     } finally {
       setSavingDeadlines(false);
     }
@@ -377,28 +395,32 @@ export default function MarksSubmissionDeadlinesPage() {
         <div className="flex gap-2">
           <button
             onClick={refetch}
-            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md font-medium text-sm hover:bg-gray-200"
+            disabled={loading}
+            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md font-medium text-sm hover:bg-gray-200 disabled:opacity-50"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
       </div>
 
       {/* Error Display */}
-      {/* {(error || submissionError || submissionDetailsError) && (
+      {(error || submissionError || submissionDetailsError) && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
           <div className="flex justify-between items-center">
-            <span>{error || submissionError || submissionDetailsError}</span>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>{error || submissionError || submissionDetailsError}</span>
+            </div>
             <button
               onClick={clearError}
               className="text-red-700 hover:text-red-900"
             >
-              ×
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
-      )} */}
+      )}
 
       <Card className="p-6 border border-gray-200">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -556,7 +578,8 @@ export default function MarksSubmissionDeadlinesPage() {
                           <TableCell>
                             <button
                               onClick={() => handleOpenModal(assignment)}
-                              className="flex items-center gap-1 bg-[#026892] text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-[#026892]/90"
+                              disabled={isCreatingSubmissions}
+                              className="flex items-center gap-1 bg-[#026892] text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-[#026892]/90 disabled:opacity-50"
                             >
                               <Settings className="h-3 w-3" />
                               Set Deadlines
@@ -729,7 +752,9 @@ export default function MarksSubmissionDeadlinesPage() {
                   {/* Deadline Form */}
                   <div className="space-y-4">
                     <h3 className="font-medium text-gray-900">
-                      Set New Deadlines
+                      {modalData?.currentCatDeadline || modalData?.currentExamDeadline 
+                        ? 'Update Deadlines' 
+                        : 'Set New Deadlines'}
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -790,7 +815,9 @@ export default function MarksSubmissionDeadlinesPage() {
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    Save Deadlines
+                    {modalData?.currentCatDeadline || modalData?.currentExamDeadline 
+                      ? 'Update Deadlines' 
+                      : 'Save Deadlines'}
                   </>
                 )}
               </button>

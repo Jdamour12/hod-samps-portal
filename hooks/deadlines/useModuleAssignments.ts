@@ -19,7 +19,9 @@ interface UseModuleAssignmentsReturn {
   refetch: () => void;
   clearError: () => void;
   updateFilters: (filters: Partial<ModuleAssignmentsParams>) => void;
-    createSubmissions: (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }) => Promise<CreateSubmissionsResponse>;
+  createSubmissions: (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }) => Promise<CreateSubmissionsResponse>;
+  updateSubmissions: (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }) => Promise<CreateSubmissionsResponse>;
+  setDeadlines: (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }) => Promise<CreateSubmissionsResponse>;
   isCreatingSubmissions: boolean;
   submissionError: string | null;
   getSubmissionDetails: (moduleId: string) => Promise<ModuleSubmissionDetailsResponse>;
@@ -50,15 +52,21 @@ export const useModuleAssignments = (
       setLoading(true);
       setError(null);
       
+      console.log('Hook: Fetching module assignments with params:', params);
       const response = await moduleAssignmentsApi.getModuleAssignments(params);
+      
+      console.log('Hook: Module assignments response:', {
+        totalElements: response.totalElements,
+        contentLength: response.content.length
+      });
       
       setData(response.content);
       setTotalElements(response.totalElements);
       setTotalPages(response.totalPages);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch module assignments';
+      console.error('Hook: Error fetching module assignments:', err);
       setError(errorMessage);
-      console.error('Error fetching module assignments:', err);
     } finally {
       setLoading(false);
     }
@@ -84,6 +92,7 @@ export const useModuleAssignments = (
   }, []);
 
   const refetch = useCallback(() => {
+    console.log('Hook: Refetching data...');
     fetchData();
   }, [fetchData]);
 
@@ -93,30 +102,33 @@ export const useModuleAssignments = (
     setSubmissionDetailsError(null);
   }, []);
 
-  const createSubmissions = useCallback(async (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }): Promise<CreateSubmissionsResponse> => {
+  // New unified function that handles both create and update
+  const setDeadlines = useCallback(async (
+    moduleId: string, 
+    deadlines: { catDeadline: string; examDeadline: string }
+  ): Promise<CreateSubmissionsResponse> => {
+    console.log('Hook: Setting deadlines for module:', moduleId);
+    console.log('Hook: Deadlines:', deadlines);
+    
     try {
       setIsCreatingSubmissions(true);
       setSubmissionError(null);
       
-      console.log('Hook: Creating submissions for module:', moduleId);
-      console.log('Hook: Deadlines data:', deadlines);
+      const response = await moduleAssignmentsApi.setModuleDeadlines(moduleId, deadlines);
       
-      const response = await moduleAssignmentsApi.createModuleSubmissions(moduleId, deadlines);
+      console.log('Hook: Set deadlines response:', response);
       
-      console.log('Hook: API Response:', response);
-      
-      if (response.success) {
-        // Refresh the data after successful creation
-        await fetchData();
+      if (response && (response.success || response.success === undefined)) {
+        console.log('Hook: Deadlines set successfully, refetching data...');
+        await fetchData(); // Refresh the data
       }
       
       return response;
     } catch (err: any) {
-      console.error('Hook: Error creating submissions:', err);
+      console.error('Hook: Error setting deadlines:', err);
       
-      let errorMessage = 'Failed to create submissions';
+      let errorMessage = 'Failed to set deadlines';
       
-      // Extract error message from various possible locations
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.error) {
@@ -134,6 +146,23 @@ export const useModuleAssignments = (
     }
   }, [fetchData]);
 
+  // Legacy functions that redirect to setDeadlines
+  const createSubmissions = useCallback(async (
+    moduleId: string, 
+    deadlines: { catDeadline: string; examDeadline: string }
+  ): Promise<CreateSubmissionsResponse> => {
+    console.log('Hook: createSubmissions called, redirecting to setDeadlines');
+    return setDeadlines(moduleId, deadlines);
+  }, [setDeadlines]);
+
+  const updateSubmissions = useCallback(async (
+    moduleId: string, 
+    deadlines: { catDeadline: string; examDeadline: string }
+  ): Promise<CreateSubmissionsResponse> => {
+    console.log('Hook: updateSubmissions called, redirecting to setDeadlines');
+    return setDeadlines(moduleId, deadlines);
+  }, [setDeadlines]);
+
   const getSubmissionDetails = useCallback(async (moduleId: string): Promise<ModuleSubmissionDetailsResponse> => {
     try {
       setIsLoadingSubmissionDetails(true);
@@ -143,7 +172,12 @@ export const useModuleAssignments = (
       
       const response = await moduleAssignmentsApi.getModuleSubmissionDetails(moduleId);
       
-      console.log('Hook: Submission details response:', response);
+      console.log('Hook: Submission details response:', {
+        success: response.success,
+        moduleId: response.data?.moduleAssignmentId,
+        catStatus: response.data?.catSubmission?.status,
+        examStatus: response.data?.examSubmission?.status
+      });
       
       return response;
     } catch (err: any) {
@@ -180,6 +214,8 @@ export const useModuleAssignments = (
     clearError,
     updateFilters,
     createSubmissions,
+    updateSubmissions,
+    setDeadlines, // New unified function
     isCreatingSubmissions,
     submissionError,
     getSubmissionDetails,

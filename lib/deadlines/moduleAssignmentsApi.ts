@@ -43,28 +43,40 @@ export interface ModuleAssignmentsParams {
 export interface DeadlineSubmission {
   catDeadline: string;
   examDeadline: string;
-  instructions: string;
-  catTitle: string;
-  examTitle: string;
-  catPriority: 'NORMAL' | 'HIGH' | 'LOW';
-  examPriority: 'NORMAL' | 'HIGH' | 'LOW';
-  catGracePeriodHours: number;
-  examGracePeriodHours: number;
-  catNotes: string;
-  examNotes: string;
+  instructions?: string;
+  catTitle?: string;
+  examTitle?: string;
+  catPriority?: 'NORMAL' | 'HIGH' | 'LOW';
+  examPriority?: 'NORMAL' | 'HIGH' | 'LOW';
+  catGracePeriodHours?: number;
+  examGracePeriodHours?: number;
+  catNotes?: string;
+  examNotes?: string;
 }
 
-// Request interface matches the exact API format
-export interface CreateSubmissionsRequest extends DeadlineSubmission {}
+// Simplified request interface - only required fields
+export interface CreateSubmissionsRequest {
+  catDeadline: string;
+  examDeadline: string;
+  instructions?: string;
+  catTitle?: string;
+  examTitle?: string;
+  catPriority?: 'NORMAL' | 'HIGH' | 'LOW';
+  examPriority?: 'NORMAL' | 'HIGH' | 'LOW';
+  catGracePeriodHours?: number;
+  examGracePeriodHours?: number;
+  catNotes?: string;
+  examNotes?: string;
+}
 
 export interface CreateSubmissionsResponse {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     CAT?: DetailedSubmission;
     EXAM?: DetailedSubmission;
   };
-  timestamp: string;
+  timestamp?: string;
 }
 
 export interface SubmissionDetails {
@@ -249,52 +261,123 @@ export const moduleAssignmentsApi = {
   },
 
   getModuleSubmissionDetails: async (moduleId: string): Promise<ModuleSubmissionDetailsResponse> => {
-    const response = await api.get(`/grading/marks-submission/module/${moduleId}/submission-details`);
-    return response.data;
-  },
-
-  // Fixed: Send submissions as array directly, matching the API's expected format
-  createModuleSubmissions: async (moduleId: string, deadlines: { catDeadline: string; examDeadline: string }): Promise<CreateSubmissionsResponse> => {
-    console.log('Creating submissions for module:', moduleId);
-    console.log('Input deadlines:', deadlines);
-    
+    console.log('API: Fetching submission details for module:', moduleId);
     try {
-      // Format dates to match API expectations exactly
-      const formattedDeadlines = {
-        catDeadline: new Date(deadlines.catDeadline).toISOString().slice(0, 19), // Format to YYYY-MM-DDTHH:mm:ss
-        examDeadline: new Date(deadlines.examDeadline).toISOString().slice(0, 19)
-      };
-      
-      console.log('Formatted deadlines:', formattedDeadlines);
-      
-      const requestBody = {
-        ...formattedDeadlines,
-        instructions: "Please ensure all marks are submitted accurately and on time",
-        catTitle: "Continuous Assessment Test - Semester 1",
-        examTitle: "Final Examination - Semester 1",
-        catPriority: "NORMAL",
-        examPriority: "HIGH",
-        catGracePeriodHours: 24,
-        examGracePeriodHours: 48,
-        catNotes: "First CAT for the semester",
-        examNotes: "Final exam covering all topics"
-      };
-      
-      console.log('Full request body:', JSON.stringify(requestBody, null, 2));
-      console.log('API URL:', `/grading/marks-submissions/module/${moduleId}/set-deadline`);
-      
-      const response = await api.post(`/grading/marks-submissions/module/${moduleId}/set-deadline`, requestBody);
-      console.log('API response:', response.data);
+      const response = await api.get(`/grading/marks-submission/module/${moduleId}/submission-details`);
+      console.log('API: Submission details response:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('API Error:', error.response?.data);
-      console.error('Status:', error.response?.status);
-      console.error('Full error:', error);
+      console.error('API: Error fetching submission details:', error);
       throw error;
     }
   },
 
-  // Keep these for potential future use if individual/bulk deadline updates are added
+  // Fixed function using the correct endpoint
+  setModuleDeadlines: async (
+    moduleId: string, 
+    deadlines: { catDeadline: string; examDeadline: string }
+  ): Promise<CreateSubmissionsResponse> => {
+    console.log('=== API Call Debug Info ===');
+    console.log('Module ID:', moduleId);
+    console.log('Input deadlines:', deadlines);
+    
+    if (!moduleId || !moduleId.trim()) {
+      throw new Error('Module ID is required and cannot be empty');
+    }
+
+    if (!deadlines.catDeadline || !deadlines.examDeadline) {
+      throw new Error('Both CAT and EXAM deadlines are required');
+    }
+
+    // Validate dates
+    const catDate = new Date(deadlines.catDeadline);
+    const examDate = new Date(deadlines.examDeadline);
+    
+    if (isNaN(catDate.getTime()) || isNaN(examDate.getTime())) {
+      throw new Error('Invalid date format provided');
+    }
+
+    // Use the correct endpoint URL
+    const url = `/grading/marks-submission/module/${encodeURIComponent(moduleId)}/create-submissions`;
+    console.log('API URL:', url);
+
+    // Create the complete request body matching the expected format
+    const requestBody: CreateSubmissionsRequest = {
+      catDeadline: catDate.toISOString(),
+      examDeadline: examDate.toISOString(),
+      instructions: "Please ensure all marks are submitted accurately and on time",
+      catTitle: "Continuous Assessment Test",
+      examTitle: "Final Examination",
+      catPriority: "NORMAL",
+      examPriority: "HIGH",
+      catGracePeriodHours: 24,
+      examGracePeriodHours: 48,
+      catNotes: "CAT submission",
+      examNotes: "Exam submission"
+    };
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
+    try {
+      // The API uses POST for both create and update operations
+      console.log('Making POST request to create/update submissions');
+      const response = await api.post(url, requestBody);
+      console.log('POST Success:', response.status);
+      console.log('Response data:', response.data);
+      return response.data;
+      
+    } catch (error: any) {
+      console.error('=== API Request Failed ===');
+      console.error('Error status:', error?.response?.status);
+      console.error('Error data:', error?.response?.data);
+      console.error('Error message:', error?.message);
+      console.error('Request config:', {
+        url: error?.config?.url,
+        method: error?.config?.method,
+        baseURL: error?.config?.baseURL
+      });
+
+      // Handle different types of errors
+      if (error?.response?.status === 500) {
+        throw new Error('Server error occurred. Please check server logs and contact support if the issue persists.');
+      }
+      
+      if (error?.response?.status === 404) {
+        throw new Error(`API endpoint not found. Please verify the module ID "${moduleId}" exists.`);
+      }
+      
+      if (error?.response?.status === 400) {
+        const errorMsg = error?.response?.data?.message || 'Invalid request data';
+        throw new Error(`Bad request: ${errorMsg}`);
+      }
+      
+      if (error?.response?.status === 403) {
+        throw new Error('Insufficient permissions to set deadlines for this module.');
+      }
+      
+      if (error?.response?.status === 409) {
+        throw new Error('Conflict: Deadlines may already exist or there is a data conflict.');
+      }
+      
+      // For network errors or other issues
+      if (!error?.response) {
+        throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+      }
+      
+      throw new Error(error?.response?.data?.message || error?.message || 'Unknown error occurred while setting deadlines');
+    }
+  },
+
+  // Legacy functions for compatibility - now redirect to the corrected function
+  createModuleSubmissions: async (
+    moduleId: string, 
+    deadlines: { catDeadline: string; examDeadline: string }, 
+    isUpdate = false
+  ): Promise<CreateSubmissionsResponse> => {
+    console.log('Using legacy createModuleSubmissions, redirecting to setModuleDeadlines');
+    return moduleAssignmentsApi.setModuleDeadlines(moduleId, deadlines);
+  },
+
   updateModuleDeadline: async (moduleId: string, deadline: string): Promise<void> => {
     await api.put(`/academics/module-assignments/${moduleId}/deadline`, {
       deadline
